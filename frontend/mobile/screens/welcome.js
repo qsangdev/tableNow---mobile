@@ -37,6 +37,13 @@ const Welcome = ({navigation}) => {
       source={require('../assets/welcome.png')}>
       <View style={styles.background} />
       <View style={styles.welcome}>
+        <TouchableOpacity
+          style={styles.logInButton}
+          onPress={() => {
+            navigation.navigate('Login');
+          }}>
+          <Text style={styles.logInText}>Staff Log In</Text>
+        </TouchableOpacity>
         <View>
           <Text style={styles.welcomeTitle}>
             Let your favourite food find you
@@ -95,9 +102,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 30,
   },
+  logInButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 10,
+  },
   buttonText: {
     color: 'black',
     fontSize: 20,
+    fontWeight: '700',
+  },
+  logInText: {
+    color: 'black',
+    fontSize: 15,
     fontWeight: '700',
   },
 });
