@@ -99,8 +99,9 @@ const Home = ({navigation}) => {
     const refesh = navigation.addListener('focus', () => {
       allTables();
     });
+    console.log(tables);
     return refesh;
-  }, []);
+  }, [tables]);
 
   const allTables = async () => {
     try {
@@ -142,6 +143,7 @@ const Home = ({navigation}) => {
       await AsyncStorage.setItem('tables', JSON.stringify(removeItem));
       setTables(removeItem);
       allTables();
+      console.log(tables);
     } catch (e) {
       console.log(e);
     }
@@ -260,7 +262,7 @@ const Home = ({navigation}) => {
                     );
                   })
                 ) : (
-                  <Text style={styles.modalText}>-- Empty --</Text>
+                  <Text style={styles.modalText}></Text>
                 )}
               </ScrollView>
             </View>
