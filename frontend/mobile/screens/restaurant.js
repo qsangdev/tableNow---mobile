@@ -73,10 +73,12 @@ const Restaurant = ({route, navigation}) => {
               <View style={styles.title}>
                 <Text style={styles.name}>{item.name}</Text>
               </View>
-              <View style={styles.rating}>
-                <Ionicons name="star" color="black" size={17} />
+              <TouchableOpacity
+                style={styles.rating}
+                onPress={() => navigation.navigate('Rating')}>
+                <Ionicons name="star-outline" color="black" size={17} />
                 <Text style={styles.ratingText}>{item.rating}</Text>
-              </View>
+              </TouchableOpacity>
             </View>
             <View style={styles.location}>
               <Text>{item.location}</Text>
@@ -214,7 +216,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: 'black',
   },
-  timeText:{
+  timeText: {
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 5,
@@ -233,7 +235,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor:'black'
+    backgroundColor: 'black',
   },
   menuContainer: {
     marginBottom: 10,
@@ -271,7 +273,7 @@ const styles = StyleSheet.create({
     padding: 5,
     backgroundColor: 'gray',
     borderRadius: 10,
-    backgroundColor:'black'
+    backgroundColor: 'black',
   },
   buttonText: {
     fontSize: 20,

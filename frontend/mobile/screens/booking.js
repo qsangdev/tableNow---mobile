@@ -14,7 +14,7 @@ import {
   Image,
   Keyboard,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Party} from '../assets';
 import DatePicker from 'react-native-date-picker';
 import NumericInput from 'react-native-numeric-input';
@@ -23,7 +23,6 @@ import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-get-random-values';
 import {v4 as uuidv4} from 'uuid';
-
 
 const {width} = Dimensions.get('window');
 const {height} = Dimensions.get('window');
@@ -35,6 +34,8 @@ const Booking = ({route, navigation}) => {
   const [tables, setTables] = useState(1);
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
+  const [checkTable, setCheckTable] = useState(false);
+  const [checkTime, setCheckTime] = useState(false);
 
   const today = new Date();
 
@@ -43,6 +44,8 @@ const Booking = ({route, navigation}) => {
   const [clicked, setClicked] = useState(1);
 
   const handleClick = id => {
+    checkAvailableTable();
+    checkRealTime();
     setClicked(id);
   };
 
@@ -51,10 +54,52 @@ const Booking = ({route, navigation}) => {
       return alert('Please enter your name');
     } else if (number === '') {
       return alert('Please enter your number..');
+    } else if (checkTable === false) {
+      return alert('The time you chose is full');
+    } else if (checkTime === false) {
+      return alert('The reservation time has passed');
     } else {
       setModalVisible(!modalVisible);
     }
   };
+
+  const checkAvailableTable = () => {
+    const check = item.times.shift[clicked - 1].tables.filter(
+      e => e.status === 'unavailable',
+    ).length;
+    if (check < item.times.shift[clicked - 1].tables.length) {
+      console.log('true');
+      return setCheckTable(true);
+    } else {
+      console.log('false');
+      setCheckTable(false);
+    }
+  };
+
+  const eatTime = moment(
+    moment(date).format('DD/MM') +
+      ' ' +
+      item.times.shift[clicked - 1].timeStart,
+    'DD/MM HH:mm',
+  );
+
+  const checkRealTime = () => {
+    if (eatTime.isBefore(moment())) {
+      // console.log('false');
+      setCheckTime(false);
+    } else {
+      // console.log('true');
+      setCheckTime(true);
+    }
+  };
+
+  useEffect(() => {
+    checkRealTime();
+  }, [clicked, checkTime, date]);
+
+  useEffect(() => {
+    checkAvailableTable();
+  }, [clicked, checkTable]);
 
   const sendRequest = async () => {
     try {
@@ -64,7 +109,7 @@ const Booking = ({route, navigation}) => {
         name: name,
         number: number,
         date: moment(date).format('DD/MM/YYYY'),
-        time: item.times.shift[clicked - 1].time,
+        time: item.times.shift[clicked - 1].timeStart,
         restaurant: item.name,
         location: item.location,
         people: tables,
@@ -110,7 +155,7 @@ const Booking = ({route, navigation}) => {
                 Time: {moment(date).format('DD/MM/YYYY')}
               </Text>
               <Button
-                color="#483D8B"
+                color="black"
                 title="Choose your date"
                 onPress={() => setOpen(true)}
               />
@@ -137,7 +182,7 @@ const Booking = ({route, navigation}) => {
                 type="plus-minus"
                 value={tables}
                 minValue={1}
-                maxValue={15}
+                maxValue={64}
                 totalWidth={100}
                 totalHeight={35}
                 onChange={value => setTables(value)}
@@ -161,7 +206,7 @@ const Booking = ({route, navigation}) => {
                         color="white"
                         size={15}
                         name="time-outline"></Ionicons>{' '}
-                      {e.time}
+                      {e.timeStart} - {e.timeEnd}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -178,9 +223,9 @@ const Booking = ({route, navigation}) => {
                           size={30}
                           name="restaurant-outline"></Ionicons>
                         <Text style={styles.note}>
-                          Available:{' '}
+                          Reserved:{' '}
                           {
-                            e.tables.filter(e => e.status === 'available')
+                            e.tables.filter(e => e.status === 'unavailable')
                               .length
                           }{' '}
                           / {e.tables.length}
@@ -260,7 +305,8 @@ const Booking = ({route, navigation}) => {
             <View style={styles.info}>
               <Ionicons color="black" size={30} name="time-outline"></Ionicons>
               <Text style={styles.infoText}>
-                {item.times.shift[clicked - 1].time}
+                {item.times.shift[clicked - 1].timeStart} -{' '}
+                {item.times.shift[clicked - 1].timeEnd}
               </Text>
             </View>
             <View style={styles.info}>
@@ -304,7 +350,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     marginTop: 10,
-    borderColor:'#483D8B'
+    borderColor: 'black',
   },
   description: {
     width: '100%',
@@ -332,7 +378,7 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: 'silver',
     borderRadius: 5,
-    backgroundColor: '#6A5ACD',
+    backgroundColor: 'gray',
   },
   buttonText: {
     fontWeight: '800',
@@ -343,7 +389,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'gray',
     alignSelf: 'center',
     borderRadius: 5,
-    backgroundColor: '#483D8B',
+    backgroundColor: 'black',
   },
   people: {
     justifyContent: 'space-between',
@@ -366,7 +412,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     marginLeft: 5,
     padding: 5,
-    borderColor: '#483D8B',
+    borderColor: 'black',
   },
   table: {
     padding: 5,
@@ -388,7 +434,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginHorizontal: 20,
     marginBottom: 10,
-    backgroundColor: '#483D8B',
+    backgroundColor: 'black',
   },
   buttonDone: {
     fontSize: 20,

@@ -56,29 +56,31 @@ const data = [
       shift: [
         {
           id: 1,
-          time: '09:00 - 12:00',
+          timeStart: '09:00',
+          timeEnd: '12:00',
           tables: [
             {id: 1, name: '01', status: 'available'},
-            {id: 2, name: '02', status: 'available'},
+            {id: 2, name: '02', status: 'unavailable'},
             {id: 3, name: '03', status: 'unavailable'},
-            {id: 4, name: '04', status: 'available'},
-            {id: 5, name: '05', status: 'unavailable'},
-            {id: 6, name: '06', status: 'available'},
-            {id: 7, name: '07', status: 'available'},
+            {id: 4, name: '04', status: 'unavailable'},
+            {id: 5, name: '05', status: 'available'},
+            {id: 6, name: '06', status: 'unavailable'},
+            {id: 7, name: '07', status: 'unavailable'},
             {id: 8, name: '08', status: 'unavailable'},
-            {id: 9, name: '09', status: 'unavailable'},
+            {id: 9, name: '09', status: 'available'},
             {id: 10, name: '10', status: 'available'},
             {id: 11, name: '11', status: 'unavailable'},
             {id: 12, name: '12', status: 'available'},
-            {id: 13, name: '13', status: 'available'},
+            {id: 13, name: '13', status: 'unavailable'},
             {id: 14, name: '14', status: 'unavailable'},
             {id: 15, name: '15', status: 'available'},
-            {id: 16, name: '16', status: 'available'},
+            {id: 16, name: '16', status: 'unavailable'},
           ],
         },
         {
           id: 2,
-          time: '12-00 - 15:00',
+          timeStart: '12-00',
+          timeEnd: '15:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -100,7 +102,8 @@ const data = [
         },
         {
           id: 3,
-          time: '15:00 - 17:00',
+          timeStart: '15:00',
+          timeEnd: '17:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -181,7 +184,8 @@ const data = [
       shift: [
         {
           id: 1,
-          time: '17:00 - 19:00',
+          timeStart: '17:00',
+          timeEnd: '19:00',
 
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
@@ -204,7 +208,8 @@ const data = [
         },
         {
           id: 2,
-          time: '19-00 - 21:00',
+          timeStart: '19-00',
+          timeEnd: '21:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -226,7 +231,8 @@ const data = [
         },
         {
           id: 3,
-          time: '21:00 - 22:30',
+          timeStart: '21:00',
+          timeEnd: '22:30',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -309,7 +315,8 @@ const data = [
       shift: [
         {
           id: 1,
-          time: '12:00 - 16:00',
+          timeStart: '12:00',
+          timeEnd: '16:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -331,7 +338,8 @@ const data = [
         },
         {
           id: 2,
-          time: '16-00 - 20:00',
+          timeStart: '16-00',
+          timeEnd: '20:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -353,7 +361,8 @@ const data = [
         },
         {
           id: 3,
-          time: '20:00 - 22:00',
+          timeStart: '20:00',
+          timeEnd: '22:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -436,7 +445,8 @@ const data = [
       shift: [
         {
           id: 1,
-          time: '13:00 - 16:00',
+          timeStart: '13:00',
+          timeEnd: '16:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -458,7 +468,8 @@ const data = [
         },
         {
           id: 2,
-          time: '16-00 - 20:00',
+          timeStart: '16-00',
+          timeEnd: '20:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -480,7 +491,8 @@ const data = [
         },
         {
           id: 3,
-          time: '20:00 - 22:00',
+          timeStart: '20:00',
+          timeEnd: '22:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -563,7 +575,8 @@ const data = [
       shift: [
         {
           id: 1,
-          time: '18:00 - 20:00',
+          timeStart: '18:00',
+          timeEnd: '20:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -585,7 +598,8 @@ const data = [
         },
         {
           id: 2,
-          time: '20-00 - 21:30',
+          timeStart: '20-00',
+          timeEnd: '21:30',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -607,7 +621,8 @@ const data = [
         },
         {
           id: 3,
-          time: '21:30 - 23:00',
+          timeStart: '21:30',
+          timeEnd: '23:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -690,7 +705,8 @@ const data = [
       shift: [
         {
           id: 1,
-          time: '09:00 - 12:00',
+          timeStart: '09:00',
+          timeEnd: '12:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -712,7 +728,8 @@ const data = [
         },
         {
           id: 2,
-          time: '12-00 - 15:00',
+          timeStart: '12-00',
+          timeEnd: '15:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -734,7 +751,8 @@ const data = [
         },
         {
           id: 3,
-          time: '15:00 - 17:00',
+          timeStart: '15:00',
+          timeEnd: '17:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -817,7 +835,8 @@ const data = [
       shift: [
         {
           id: 1,
-          time: '10:00 - 12:30',
+          timeStart: '10:00',
+          timeEnd: '12:30',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'unavailable'},
@@ -839,7 +858,8 @@ const data = [
         },
         {
           id: 2,
-          time: '12-30 - 15:30',
+          timeStart: '12-30',
+          timeEnd: '15:30',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -861,7 +881,8 @@ const data = [
         },
         {
           id: 3,
-          time: '15:30 - 18:00',
+          timeStart: '15:30',
+          timeEnd: '18:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -944,7 +965,8 @@ const data = [
       shift: [
         {
           id: 1,
-          time: '09:00 - 12:00',
+          timeStart: '09:00',
+          timeEnd: '12:00',
           tables: [
             {id: 1, name: '01', status: 'available'},
             {id: 2, name: '02', status: 'available'},
@@ -966,7 +988,8 @@ const data = [
         },
         {
           id: 2,
-          time: '12-00 - 15:00',
+          timeStart: '12-00',
+          timeEnd: '15:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},
@@ -988,7 +1011,8 @@ const data = [
         },
         {
           id: 3,
-          time: '15:00 - 17:00',
+          timeStart: '15:00',
+          timeEnd: '17:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'available'},

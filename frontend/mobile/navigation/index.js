@@ -4,6 +4,7 @@ import Home from '../screens/home';
 import Welcome from '../screens/welcome';
 import Restaurant from '../screens/restaurant';
 import Booking from '../screens/booking';
+import Rating from '../screens/rating';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,7 +36,11 @@ function MyStack() {
         component={Booking}
         options={{headerShown: false}}
       />
-      
+      <Stack.Screen
+        name="Rating"
+        component={Rating}
+        options={{headerShown: false}}
+      />
     </Stack.Navigator>
   );
 }

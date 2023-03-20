@@ -108,7 +108,6 @@ const Home = ({navigation}) => {
       const allBooked = JSON.parse(data);
       setTables(allBooked);
       setBooked(allBooked.length);
-      console.log(tables);
     } catch (e) {
       console.log(e);
     }
@@ -271,7 +270,7 @@ const Home = ({navigation}) => {
               <View style={styles.bookedNumber}>
                 <Text style={styles.booked}>{booked}</Text>
               </View>
-              <Ionicons name="restaurant-outline" size={35} color="#006400" />
+              <Ionicons name="restaurant-outline" size={35} color="black" />
             </TouchableOpacity>
           </View>
         </View>
@@ -330,7 +329,17 @@ const Home = ({navigation}) => {
                         });
                       }}>
                       <Image style={styles.itemImage} source={item.images[0]} />
-                      <Text style={styles.itemDescription}>{item.name}</Text>
+                      <Text style={styles.itemDescription}>
+                        {item.name}{' '}
+                        <View style={styles.ratingBox}>
+                          <Ionicons
+                            name="star-outline"
+                            color="black"
+                            size={15}
+                          />
+                          <Text style={styles.ratingText}>{item.rating}</Text>
+                        </View>
+                      </Text>
                       <Text>
                         {getDistance(
                           {
@@ -455,6 +464,25 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     marginTop: 5,
+    color: 'black',
+  },
+  rating: {
+    padding: 5,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    borderRadius: 10,
+    justifyContent: 'center',
+  },
+  ratingBox: {
+    flexDirection: 'row',
+    backgroundColor: 'yellow',
+    padding: 2,
+    borderRadius: 5,
+  },
+  ratingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 5,
     color: 'black',
   },
   itemDiscount: {
