@@ -24,7 +24,7 @@ const Rating = ({navigation}) => {
               onPress={() => setDefaultRating(item)}>
               <Text style={styles.starStarStyle}>
                 {item <= defaultRating ? (
-                  <Ionicons name="star" size={30} color="yellow" />
+                  <Ionicons name="star" size={33} color="yellow" />
                 ) : (
                   <Ionicons name="star-outline" size={30} color="yellow" />
                 )}
@@ -48,28 +48,23 @@ const Rating = ({navigation}) => {
       <Text style={styles.emoji}>
         {defaultRating == 1 ? (
           <>
-            <Text>😡</Text>
-            <Text>Bad</Text>
+            <Text>😡</Text> <Text>Bad</Text>
           </>
         ) : defaultRating == 2 ? (
           <>
-            <Text>😞</Text>
-            <Text>Not Good</Text>
+            <Text>😞</Text> <Text>Not Good</Text>
           </>
         ) : defaultRating == 3 ? (
           <>
-            <Text>😐</Text>
-            <Text>So So</Text>
+            <Text>😐</Text> <Text>So So</Text>
           </>
         ) : defaultRating == 4 ? (
           <>
-            <Text>😊</Text>
-            <Text>Great</Text>
+            <Text>😊</Text> <Text>Great</Text>
           </>
         ) : defaultRating == 5 ? (
           <>
-            <Text>😍</Text>
-            <Text>Excellent</Text>
+            <Text>😍</Text> <Text>Excellent</Text>
           </>
         ) : (
           <Text>🤔</Text>

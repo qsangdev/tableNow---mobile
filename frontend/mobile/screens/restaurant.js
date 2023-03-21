@@ -97,9 +97,10 @@ const Restaurant = ({route, navigation}) => {
               </Text>
             </View>
             <View style={styles.time}>
-              <Ionicons name="time-outline" color="white" size={17} />
+              <Ionicons name="alarm-outline" color="black" size={22} />
               <Text style={styles.timeText}>
-                {item.times.open_time} - {item.times.close_time}
+                <Text>Opening Time:</Text> {item.times.open_time} -{' '}
+                {item.times.close_time}
               </Text>
             </View>
             <Text style={styles.resDescription}>{item.description}</Text>
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 5,
-    color: 'white',
+    color: 'black',
   },
   resDescription: {
     paddingVertical: 10,
@@ -234,8 +235,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 10,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'black',
+    alignSelf: 'center',
+    backgroundColor: 'white',
+    borderColor: 'black',
+    borderWidth: 1,
   },
   menuContainer: {
     marginBottom: 10,
