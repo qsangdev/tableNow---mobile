@@ -59,18 +59,18 @@ const data = [
           timeStart: '09:00',
           timeEnd: '12:00',
           tables: [
-            {id: 1, name: '01', status: 'available'},
+            {id: 1, name: '01', status: 'unavailable'},
             {id: 2, name: '02', status: 'unavailable'},
             {id: 3, name: '03', status: 'unavailable'},
             {id: 4, name: '04', status: 'unavailable'},
-            {id: 5, name: '05', status: 'available'},
+            {id: 5, name: '05', status: 'unavailable'},
             {id: 6, name: '06', status: 'unavailable'},
             {id: 7, name: '07', status: 'unavailable'},
             {id: 8, name: '08', status: 'unavailable'},
-            {id: 9, name: '09', status: 'available'},
+            {id: 9, name: '09', status: 'unavailable'},
             {id: 10, name: '10', status: 'available'},
             {id: 11, name: '11', status: 'unavailable'},
-            {id: 12, name: '12', status: 'available'},
+            {id: 12, name: '12', status: 'unavailable'},
             {id: 13, name: '13', status: 'unavailable'},
             {id: 14, name: '14', status: 'unavailable'},
             {id: 15, name: '15', status: 'available'},
@@ -79,7 +79,7 @@ const data = [
         },
         {
           id: 2,
-          timeStart: '12-00',
+          timeStart: '12:00',
           timeEnd: '15:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
@@ -208,7 +208,7 @@ const data = [
         },
         {
           id: 2,
-          timeStart: '19-00',
+          timeStart: '19:00',
           timeEnd: '21:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},

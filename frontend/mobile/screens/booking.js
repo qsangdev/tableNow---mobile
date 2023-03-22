@@ -36,6 +36,7 @@ const Booking = ({route, navigation}) => {
   const [number, setNumber] = useState('');
   const [checkTable, setCheckTable] = useState(false);
   const [checkTime, setCheckTime] = useState(false);
+  const [remaining, setRemaining] = useState(0);
 
   const today = new Date();
 
@@ -58,8 +59,10 @@ const Booking = ({route, navigation}) => {
       return alert('The time you chose is full');
     } else if (checkTime === false) {
       return alert('The reservation time has passed');
+    } else if (number.match(/(84|0[3|5|7|8|9])+([0-9]{8})\b/g)) {
+      return setModalVisible(!modalVisible);
     } else {
-      setModalVisible(!modalVisible);
+      alert('Phone number is not in the correct format!')
     }
   };
 
@@ -68,12 +71,21 @@ const Booking = ({route, navigation}) => {
       e => e.status === 'unavailable',
     ).length;
     if (check < item.times.shift[clicked - 1].tables.length) {
-      console.log('true');
       return setCheckTable(true);
     } else {
-      console.log('false');
       setCheckTable(false);
     }
+  };
+
+  const calculatorMaxPeople = () => {
+    const check = item.times.shift[clicked - 1].tables.filter(
+      e => e.status === 'unavailable',
+    ).length;
+    const allTables = item.times.shift[clicked - 1].tables.length;
+    const remainingTables = (allTables - check) * 4;
+    if (remainingTables < allTables * 4) {
+      setRemaining(remainingTables);
+    } else console.log('full slot.');
   };
 
   const eatTime = moment(
@@ -85,13 +97,15 @@ const Booking = ({route, navigation}) => {
 
   const checkRealTime = () => {
     if (eatTime.isBefore(moment())) {
-      // console.log('false');
       setCheckTime(false);
     } else {
-      // console.log('true');
       setCheckTime(true);
     }
   };
+
+  useEffect(() => {
+    calculatorMaxPeople();
+  }, [clicked, remaining]);
 
   useEffect(() => {
     checkRealTime();
@@ -176,19 +190,21 @@ const Booking = ({route, navigation}) => {
               />
             </View>
             <View style={styles.people}>
-              <Text style={styles.mealTimeText}>How many people? (*) :</Text>
-
+              <View>
+                <Text style={styles.mealTimeText}>How many people?:</Text>
+                <Text> *1 table with maximum slot for 4 adults</Text>
+              </View>
               <NumericInput
                 type="plus-minus"
                 value={tables}
                 minValue={1}
-                maxValue={64}
+                maxValue={remaining}
                 totalWidth={100}
-                totalHeight={35}
+                totalHeight={47}
                 onChange={value => setTables(value)}
               />
-              <Text>1 table with maximum of 4 seats for 4 adults</Text>
             </View>
+
             <Text style={styles.mealTimeText}>Meal times :</Text>
             <View style={styles.mealTimes}>
               {item.times.shift.map(e => {
@@ -343,6 +359,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
     marginBottom: 30,
+    justifyContent: 'center',
   },
   input: {
     height: 40,
@@ -364,8 +381,8 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   mealTimeText: {
-    fontSize: 18,
-    fontWeight: '500',
+    fontSize: 20,
+    fontWeight: '700',
     marginBottom: 5,
     color: 'black',
   },
@@ -394,6 +411,7 @@ const styles = StyleSheet.create({
   people: {
     justifyContent: 'space-between',
     marginVertical: 10,
+    flexDirection: 'row',
   },
   note: {
     color: 'black',
@@ -433,8 +451,10 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     marginHorizontal: 20,
-    marginBottom: 10,
+    marginBottom: 5,
     backgroundColor: 'black',
+    borderWidth: 1,
+    borderColor: 'white',
   },
   buttonDone: {
     fontSize: 20,

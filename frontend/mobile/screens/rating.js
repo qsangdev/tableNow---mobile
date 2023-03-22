@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Image,
+  TextInput,
 } from 'react-native';
 import React, {useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -71,6 +72,9 @@ const Rating = ({navigation}) => {
         )}
       </Text>
       <CustomRatingBar />
+      <View style={styles.comment}>
+        <TextInput placeholder="Your comment .."></TextInput>
+      </View>
       <TouchableOpacity style={styles.buttonRate}>
         <Text style={styles.textRate}>Rate</Text>
       </TouchableOpacity>
@@ -141,5 +145,8 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '700',
     textAlign: 'center',
+  },
+  comment: {
+    width: '80%',
   },
 });

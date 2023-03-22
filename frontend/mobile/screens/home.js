@@ -17,12 +17,13 @@ import {
 import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import DATA from '../hardData/DATA';
-const {width} = Dimensions.get('window');
 import GetLocation from 'react-native-get-location';
 import {getDistance} from 'geolib';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Picker} from '@react-native-picker/picker';
 
+const {width} = Dimensions.get('window');
+const {height} = Dimensions.get('window');
 const ITEM_WIDTH = width / 2 - 30;
 
 const Home = ({navigation}) => {
@@ -99,9 +100,8 @@ const Home = ({navigation}) => {
     const refesh = navigation.addListener('focus', () => {
       allTables();
     });
-    console.log(tables);
     return refesh;
-  }, [tables]);
+  }, []);
 
   const allTables = async () => {
     try {
@@ -143,7 +143,6 @@ const Home = ({navigation}) => {
       await AsyncStorage.setItem('tables', JSON.stringify(removeItem));
       setTables(removeItem);
       allTables();
-      console.log(tables);
     } catch (e) {
       console.log(e);
     }
@@ -163,6 +162,10 @@ const Home = ({navigation}) => {
     return DATA.sort((a, b) => b.discount - a.discount);
   };
 
+  const sortByDistance = () => {
+    return DATA.sort((a, b) => a.longitude - b.longitude);
+  };
+
   return (
     <>
       <SafeAreaView>
@@ -174,7 +177,7 @@ const Home = ({navigation}) => {
           <Modal animationType="slide" transparent={true} visible={openBooked}>
             <View style={styles.modalContainer}>
               <SafeAreaView style={styles.modalHeader}>
-                <TouchableOpacity onPress={handleDeleteData}>
+                <TouchableOpacity onPress={tables && handleDeleteData}>
                   <Ionicons
                     size={30}
                     color="maroon"
@@ -188,7 +191,9 @@ const Home = ({navigation}) => {
                     name="close-circle"></Ionicons>
                 </TouchableOpacity>
               </SafeAreaView>
-              <ScrollView style={styles.modalBox}>
+              <ScrollView
+                style={styles.modalBox}
+                showsVerticalScrollIndicator={false}>
                 {tables ? (
                   tables.map(e => {
                     return (
@@ -262,8 +267,14 @@ const Home = ({navigation}) => {
                     );
                   })
                 ) : (
-                  <Text style={styles.modalText}></Text>
+                  <Text style={styles.modalText}>Empty</Text>
                 )}
+                {tables ? (
+                  <Text style={{textAlign: 'center'}}>
+                    * Warning: Your booking will be automatically canceled if
+                    you check in 30 minutes late
+                  </Text>
+                ) : null}
               </ScrollView>
             </View>
           </Modal>
@@ -313,9 +324,11 @@ const Home = ({navigation}) => {
               <FlatList
                 data={
                   sort === 'rating'
-                    ? sortByRating()
+                    ? sortByRating() && filterRestaurant()
                     : sort === 'discount'
-                    ? sortByDiscount()
+                    ? sortByDiscount() && filterRestaurant()
+                    : sort === 'distance'
+                    ? sortByDistance() && filterRestaurant()
                     : filterRestaurant()
                 }
                 numColumns={2}
@@ -493,10 +506,10 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   modalContainer: {
-    margin: 19,
-    backgroundColor: 'white',
+    margin: 18,
     borderRadius: 20,
-    padding: 20,
+    backgroundColor: '#F5F5F5',
+    padding: 10,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -505,6 +518,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.58,
     shadowRadius: 16.0,
     elevation: 24,
+    maxHeight: height - 50,
   },
   modalBox: {
     marginBottom: 10,
@@ -525,11 +539,13 @@ const styles = StyleSheet.create({
   bookedItem: {
     padding: 10,
     marginVertical: 5,
-    backgroundColor: 'silver',
     borderRadius: 20,
+    backgroundColor: 'white',
+    // borderWidth: 1,
+    // borderColor: 'maroon',
   },
   itemText: {
-    fontSize: 12,
+    fontSize: 14,
     color: 'black',
     fontWeight: '700',
     textAlignVertical: 'center',
