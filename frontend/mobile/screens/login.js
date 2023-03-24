@@ -1,11 +1,7 @@
 import React, {useState} from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
   TextInput,
   TouchableOpacity,
@@ -14,13 +10,7 @@ import {
 
 const Login = ({navigation}) => {
   const onPressLogin = () => {
-    // Do something about login operation
-  };
-  const onPressForgotPassword = () => {
-    // Do something about forgot password operation
-  };
-  const onPressSignUp = () => {
-    // Do something about signup operation
+    navigation.navigate('Tables');
   };
   const [state, setState] = useState({
     email: '',

@@ -44,10 +44,40 @@ const Booking = ({route, navigation}) => {
 
   const [clicked, setClicked] = useState(1);
 
+  const [available, setAvailable] = useState();
+
+  useEffect(() => {
+    checkAvailableTable();
+  }, [available]);
+
+  let maximumA = available * 4;
+
+  function increment() {
+    //setCount(prevCount => prevCount+=1);
+    setTables(function (prevCount) {
+      if (prevCount < maximumA) return (prevCount += 1);
+      else {
+        return prevCount;
+      }
+    });
+  }
+
+  function decrement() {
+    setTables(function (prevCount) {
+      if (prevCount > 1) {
+        console.log(tables);
+        return (prevCount -= 1);
+      } else {
+        return (prevCount = 1);
+      }
+    });
+  }
+
   const handleClick = id => {
     checkAvailableTable();
     checkRealTime();
     setClicked(id);
+    setTables(1);
   };
 
   const onComfirmPress = () => {
@@ -70,6 +100,8 @@ const Booking = ({route, navigation}) => {
     const check = item.times.shift[clicked - 1].tables.filter(
       e => e.status === 'unavailable',
     ).length;
+    setAvailable(16 - check);
+    console.log(available);
     if (check < item.times.shift[clicked - 1].tables.length) {
       return setCheckTable(true);
     } else {
@@ -190,6 +222,7 @@ const Booking = ({route, navigation}) => {
               />
             </View>
             <View style={styles.people}>
+<<<<<<< HEAD
               <View>
                 <Text style={styles.mealTimeText}>How many people?:</Text>
                 <Text> *1 table with maximum slot for 4 adults</Text>
@@ -203,6 +236,26 @@ const Booking = ({route, navigation}) => {
                 totalHeight={47}
                 onChange={value => setTables(value)}
               />
+=======
+              <Text style={styles.mealTimeText}>
+                How many people? (*) {tables}:
+              </Text>
+              {/* <NumericInput
+                type="plus-minus"
+                value={tables}
+                minValue={1}
+                maxValue={available * 4}
+                totalWidth={100}
+                totalHeight={35}
+                editable={false}
+                onChange={value => {
+                  setTables(value);
+                }}
+              /> */}
+              <Button title="+" onPress={increment} />
+              <Button title="-" onPress={decrement} />
+              <Text>1 table with maximum of 4 seats for 4 adults</Text>
+>>>>>>> 8bd3f3f (update frontend res staffs)
             </View>
 
             <Text style={styles.mealTimeText}>Meal times :</Text>
@@ -211,7 +264,9 @@ const Booking = ({route, navigation}) => {
                 return (
                   <TouchableOpacity
                     key={e.id}
-                    onPress={() => handleClick(e.id)}
+                    onPress={() => {
+                      handleClick(e.id);
+                    }}
                     style={[
                       e.id === clicked
                         ? styles.buttonActive
