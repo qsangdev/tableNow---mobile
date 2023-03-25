@@ -128,7 +128,6 @@ const data = [
       close_time: '17:00',
     },
   },
-  
   {
     id: 2,
     name: 'Hanoi Social Club',
@@ -236,9 +235,9 @@ const data = [
           timeEnd: '22:30',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
-            {id: 2, name: '02', status: 'available'},
+            {id: 2, name: '02', status: 'unavailable'},
             {id: 3, name: '03', status: 'unavailable'},
-            {id: 4, name: '04', status: 'available'},
+            {id: 4, name: '04', status: 'unavailable'},
             {id: 5, name: '05', status: 'unavailable'},
             {id: 6, name: '06', status: 'unavailable'},
             {id: 7, name: '07', status: 'available'},
@@ -626,12 +625,12 @@ const data = [
           timeEnd: '23:00',
           tables: [
             {id: 1, name: '01', status: 'unavailable'},
-            {id: 2, name: '02', status: 'available'},
+            {id: 2, name: '02', status: 'unavailable'},
             {id: 3, name: '03', status: 'unavailable'},
-            {id: 4, name: '04', status: 'available'},
+            {id: 4, name: '04', status: 'unavailable'},
             {id: 5, name: '05', status: 'unavailable'},
             {id: 6, name: '06', status: 'unavailable'},
-            {id: 7, name: '07', status: 'available'},
+            {id: 7, name: '07', status: 'unavailable'},
             {id: 8, name: '08', status: 'unavailable'},
             {id: 9, name: '09', status: 'unavailable'},
             {id: 10, name: '10', status: 'available'},

@@ -44,10 +44,39 @@ const Booking = ({route, navigation}) => {
 
   const [clicked, setClicked] = useState(1);
 
+  const [available, setAvailable] = useState();
+
+  useEffect(() => {
+    checkAvailableTable();
+  }, [available]);
+
+  let maximumA = available * 4;
+
+  function increment() {
+    //setCount(prevCount => prevCount+=1);
+    setTables(function (prevCount) {
+      if (prevCount < maximumA) return (prevCount += 1);
+      else {
+        return prevCount;
+      }
+    });
+  }
+
+  function decrement() {
+    setTables(function (prevCount) {
+      if (prevCount > 1) {
+        return (prevCount -= 1);
+      } else {
+        return (prevCount = 1);
+      }
+    });
+  }
+
   const handleClick = id => {
     checkAvailableTable();
     checkRealTime();
     setClicked(id);
+    setTables(1);
   };
 
   const onComfirmPress = () => {
@@ -62,7 +91,7 @@ const Booking = ({route, navigation}) => {
     } else if (number.match(/(84|0[3|5|7|8|9])+([0-9]{8})\b/g)) {
       return setModalVisible(!modalVisible);
     } else {
-      alert('Phone number is not in the correct format!')
+      alert('Phone number is not in the correct format!');
     }
   };
 
@@ -70,6 +99,7 @@ const Booking = ({route, navigation}) => {
     const check = item.times.shift[clicked - 1].tables.filter(
       e => e.status === 'unavailable',
     ).length;
+    setAvailable(16 - check);
     if (check < item.times.shift[clicked - 1].tables.length) {
       return setCheckTable(true);
     } else {
@@ -149,24 +179,42 @@ const Booking = ({route, navigation}) => {
                 Please enter your reservation information ..
               </Text>
             </View>
-            <View>
-              <TextInput
-                style={styles.input}
-                value={name}
-                placeholder="Name .."
-                onChangeText={e => setName(e)}
-              />
-              <TextInput
-                value={number}
-                style={styles.input}
-                placeholder="Phone number .."
-                keyboardType="numeric"
-                onChangeText={e => setNumber(e)}
-              />
+            <View style={styles.inputContainer}>
+              <View style={{flexDirection: 'row'}}>
+                <Ionicons
+                  style={{marginRight: 10}}
+                  color="black"
+                  size={30}
+                  name="person-circle-outline"></Ionicons>
+                <TextInput
+                  style={styles.input}
+                  value={name}
+                  placeholder="Name .."
+                  onChangeText={e => setName(e)}
+                />
+              </View>
+              <View style={{flexDirection: 'row'}}>
+                <Ionicons
+                  style={{marginRight: 10}}
+                  color="black"
+                  size={30}
+                  name="call-outline"></Ionicons>
+                <TextInput
+                  value={number}
+                  style={styles.input}
+                  placeholder="Phone number .."
+                  keyboardType="numeric"
+                  onChangeText={e => setNumber(e)}
+                />
+              </View>
             </View>
-            <View style={styles.date}>
+            <View style={styles.dateContainer}>
               <Text style={styles.mealTimeText}>
-                Time: {moment(date).format('DD/MM/YYYY')}
+                <Ionicons
+                  color="black"
+                  size={25}
+                  name="calendar-outline"></Ionicons>{' '}
+                Date: {moment(date).format('DD/MM/YYYY')}
               </Text>
               <Button
                 color="black"
@@ -189,65 +237,79 @@ const Booking = ({route, navigation}) => {
                 }}
               />
             </View>
-            <View style={styles.people}>
+            <View style={styles.peopleContainer}>
               <View>
-                <Text style={styles.mealTimeText}>How many people?:</Text>
-                <Text> *1 table with maximum slot for 4 adults</Text>
+                <Text style={styles.mealTimeText}>
+                  <Ionicons
+                    size={25}
+                    color="black"
+                    name="people-outline"></Ionicons>{' '}
+                  How many people?
+                </Text>
+                <Text>1 table with maximum of 4 seats for 4 adults</Text>
               </View>
-              <NumericInput
-                type="plus-minus"
-                value={tables}
-                minValue={1}
-                maxValue={remaining}
-                totalWidth={100}
-                totalHeight={47}
-                onChange={value => setTables(value)}
-              />
+              <View>
+                <TouchableOpacity
+                  style={styles.buttonQuantity}
+                  onPress={increment}>
+                  <Text style={styles.buttonTextQtt}>+</Text>
+                </TouchableOpacity>
+                <Text style={styles.quantityText}>{tables}</Text>
+                <TouchableOpacity
+                  style={styles.buttonQuantity}
+                  onPress={decrement}>
+                  <Text style={styles.buttonTextQtt}>-</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-
-            <Text style={styles.mealTimeText}>Meal times :</Text>
-            <View style={styles.mealTimes}>
-              {item.times.shift.map(e => {
-                return (
-                  <TouchableOpacity
-                    key={e.id}
-                    onPress={() => handleClick(e.id)}
-                    style={[
-                      e.id === clicked
-                        ? styles.buttonActive
-                        : styles.buttonTime,
-                    ]}>
-                    <Text style={styles.buttonText}>
-                      <Ionicons
-                        color="white"
-                        size={15}
-                        name="time-outline"></Ionicons>{' '}
-                      {e.timeStart} - {e.timeEnd}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            <View style={styles.tableContainer}>
-              {item.times.shift.map(e => {
-                return (
-                  e.id === clicked && (
-                    <View style={styles.tables} key={e.id}>
-                      <View style={styles.tableAvaiText}>
-                        <Ionicons
-                          style={styles.note}
-                          size={30}
-                          name="restaurant-outline"></Ionicons>
-                        <Text style={styles.note}>
-                          Reserved:{' '}
-                          {
-                            e.tables.filter(e => e.status === 'unavailable')
-                              .length
-                          }{' '}
-                          / {e.tables.length}
-                        </Text>
-                      </View>
-                      {/* {e.tables.map(e => {
+            <View style={styles.timesContainer}>
+              <Text style={styles.mealTimeText}>
+                <Ionicons
+                  color="black"
+                  size={25}
+                  name="time-outline"></Ionicons>{' '}
+                Meal times :
+              </Text>
+              <View style={styles.mealTimes}>
+                {item.times.shift.map(e => {
+                  return (
+                    <TouchableOpacity
+                      key={e.id}
+                      onPress={() => {
+                        handleClick(e.id);
+                      }}
+                      style={[
+                        e.id === clicked
+                          ? styles.buttonActive
+                          : styles.buttonTime,
+                      ]}>
+                      <Text style={styles.buttonText}>
+                        {e.timeStart} - {e.timeEnd}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <View>
+                {item.times.shift.map(e => {
+                  return (
+                    e.id === clicked && (
+                      <View style={styles.tables} key={e.id}>
+                        <View style={styles.tableAvaiText}>
+                          <Ionicons
+                            style={styles.note}
+                            size={30}
+                            name="restaurant-outline"></Ionicons>
+                          <Text style={styles.note}>
+                            Reserved:{' '}
+                            {
+                              e.tables.filter(e => e.status === 'unavailable')
+                                .length
+                            }{' '}
+                            / {e.tables.length}
+                          </Text>
+                        </View>
+                        {/* {e.tables.map(e => {
                         return (
                           <TouchableOpacity style={styles.table} key={e.id}>
                             {e.status === 'available' ? (
@@ -267,10 +329,11 @@ const Booking = ({route, navigation}) => {
                           </TouchableOpacity>
                         );
                       })} */}
-                    </View>
-                  )
-                );
-              })}
+                      </View>
+                    )
+                  );
+                })}
+              </View>
             </View>
           </View>
         </SafeAreaView>
@@ -366,8 +429,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderWidth: 1,
     borderRadius: 10,
-    marginTop: 10,
     borderColor: 'black',
+    flex: 1,
   },
   description: {
     width: '100%',
@@ -377,8 +440,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: 'black',
   },
-  date: {
-    marginVertical: 15,
+  dateContainer: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 10,
+    height: 100,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
   },
   mealTimeText: {
     fontSize: 20,
@@ -408,10 +483,22 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: 'black',
   },
-  people: {
-    justifyContent: 'space-between',
-    marginVertical: 10,
+  peopleContainer: {
     flexDirection: 'row',
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 10,
+    height: 100,
+    marginVertical: 10,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
   },
   note: {
     color: 'black',
@@ -518,5 +605,53 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginRight: 10,
     zIndex: 1,
+  },
+  buttonQuantity: {
+    backgroundColor: 'black',
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  buttonTextQtt: {
+    fontWeight: '800',
+    color: 'white',
+    fontSize: 20,
+  },
+  quantityText: {
+    marginHorizontal: 10,
+    textAlignVertical: 'center',
+    fontWeight: '700',
+    fontSize: 20,
+    color: 'black',
+  },
+  inputContainer: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 10,
+    height: 110,
+    marginVertical: 10,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
+  },
+  timesContainer: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 10,
+    height: 200,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
   },
 });
