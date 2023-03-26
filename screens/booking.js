@@ -56,7 +56,7 @@ const Booking = ({route, navigation}) => {
   }, [available]);
 
   const maxPeople = Math.max(
-    ...item.times.shift[0].tables.map(e => e.maxPeople),
+    ...item.shift[0].tables.map(e => e.maxPeople),
   );
 
   function increment() {
@@ -103,11 +103,11 @@ const Booking = ({route, navigation}) => {
   };
 
   const checkAvailableTable = () => {
-    const check = item.times.shift[clicked - 1].tables.filter(
+    const check = item.shift[clicked - 1].tables.filter(
       e => e.status === 'unavailable',
     ).length;
-    setAvailable(item.times.shift[clicked - 1].tables.length - check);
-    if (check < item.times.shift[clicked - 1].tables.length) {
+    setAvailable(item.shift[clicked - 1].tables.length - check);
+    if (check < item.shift[clicked - 1].tables.length) {
       return setCheckTable(true);
     } else {
       setCheckTable(false);
@@ -115,10 +115,10 @@ const Booking = ({route, navigation}) => {
   };
 
   // const calculatorMaxTables = () => {
-  //   const check = item.times.shift[clicked - 1].tables.filter(
+  //   const check = item.shift[clicked - 1].tables.filter(
   //     e => e.status === 'unavailable',
   //   ).length;
-  //   const allTables = item.times.shift[clicked - 1].tables.length;
+  //   const allTables = item.shift[clicked - 1].tables.length;
   //   const remainingTables = (allTables - check) * 4;
   //   if (remainingTables < allTables * 4) {
   //     setRemaining(remainingTables);
@@ -128,7 +128,7 @@ const Booking = ({route, navigation}) => {
   const eatTime = moment(
     moment(date).format('DD/MM') +
       ' ' +
-      item.times.shift[clicked - 1].timeStart,
+      item.shift[clicked - 1].timeStart,
     'DD/MM HH:mm',
   );
 
@@ -160,7 +160,7 @@ const Booking = ({route, navigation}) => {
         name: name,
         number: number,
         date: moment(date).format('DD/MM/YYYY'),
-        time: item.times.shift[clicked - 1].timeStart,
+        time: item.shift[clicked - 1].timeStart,
         restaurant: item.name,
         location: item.location,
         people: people,
@@ -282,7 +282,7 @@ const Booking = ({route, navigation}) => {
                 Meal times
               </Text>
               <View style={styles.mealTimes}>
-                {item.times.shift.map(e => {
+                {item.shift.map(e => {
                   return (
                     <TouchableOpacity
                       key={e.id}
@@ -302,7 +302,7 @@ const Booking = ({route, navigation}) => {
                 })}
               </View>
               <View>
-                {item.times.shift.map(e => {
+                {item.shift.map(e => {
                   return (
                     e.id === clicked && (
                       <View style={styles.tables} key={e.id}>
@@ -429,8 +429,8 @@ const Booking = ({route, navigation}) => {
             <View style={styles.info}>
               <Ionicons color="black" size={30} name="time-outline"></Ionicons>
               <Text style={styles.infoText}>
-                {item.times.shift[clicked - 1].timeStart} -{' '}
-                {item.times.shift[clicked - 1].timeEnd}
+                {item.shift[clicked - 1].timeStart} -{' '}
+                {item.shift[clicked - 1].timeEnd}
               </Text>
             </View>
             <View style={styles.info}>

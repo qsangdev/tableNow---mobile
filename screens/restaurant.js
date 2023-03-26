@@ -99,8 +99,8 @@ const Restaurant = ({route, navigation}) => {
             <View style={styles.time}>
               <Ionicons name="alarm-outline" color="black" size={22} />
               <Text style={styles.timeText}>
-                <Text>Opening Time:</Text> {item.times.open_time} -{' '}
-                {item.times.close_time}
+                <Text>Opening Time:</Text> {item.shift[0].timeStart} -{' '}
+                {item.shift[2].timeEnd}
               </Text>
             </View>
             <Text style={styles.resDescription}>{item.description}</Text>
