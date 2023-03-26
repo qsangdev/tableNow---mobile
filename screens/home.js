@@ -129,13 +129,13 @@ const Home = ({navigation}) => {
             await AsyncStorage.removeItem('tables');
             allTables();
             setBooked(0);
+            console.log('All data deleted.');
           },
         },
       ]);
     } catch (e) {
       console.log(e);
     }
-    console.log('All data deleted.');
   };
 
   const handleDeleteItem = async id => {
