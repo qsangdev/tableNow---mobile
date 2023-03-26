@@ -255,6 +255,14 @@ const Home = ({navigation}) => {
                           <Ionicons
                             color="maroon"
                             size={20}
+                            name="grid-outline"></Ionicons>
+                          {'  '}
+                          {e.tableId}
+                        </Text>
+                        <Text style={styles.itemText}>
+                          <Ionicons
+                            color="maroon"
+                            size={20}
                             name="people-outline"></Ionicons>
                           {'  '}
                           {e.people}
