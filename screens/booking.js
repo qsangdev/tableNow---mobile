@@ -620,8 +620,8 @@ const styles = StyleSheet.create({
     height: height - 80,
   },
   button: {
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 15,
+    padding: 15,
     elevation: 2,
     backgroundColor: '#228B22',
   },
@@ -633,6 +633,8 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     marginHorizontal: 20,
+    borderWidth: 1,
+    borderRadius: 10,
   },
   info: {
     flexDirection: 'row',
