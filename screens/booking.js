@@ -20,6 +20,7 @@ import DatePicker from 'react-native-date-picker';
 import NumericInput from 'react-native-numeric-input';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import moment from 'moment';
+import CheckBox from '@react-native-community/checkbox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-get-random-values';
 import {v4 as uuidv4} from 'uuid';
@@ -31,12 +32,16 @@ const Booking = ({route, navigation}) => {
   const [date, setDate] = useState(new Date());
   const [open, setOpen] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [tables, setTables] = useState(1);
+  const [people, setPeople] = useState(0);
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
   const [checkTable, setCheckTable] = useState(false);
   const [checkTime, setCheckTime] = useState(false);
-  const [remaining, setRemaining] = useState(0);
+
+  const [chooseId, setChooseId] = useState(0);
+  const handleChoose = id => {
+    setChooseId(id);
+  };
 
   const today = new Date();
 
@@ -50,12 +55,14 @@ const Booking = ({route, navigation}) => {
     checkAvailableTable();
   }, [available]);
 
-  let maximumA = available * 4;
+  const maxPeople = Math.max(
+    ...item.times.shift[0].tables.map(e => e.maxPeople),
+  );
 
   function increment() {
     //setCount(prevCount => prevCount+=1);
-    setTables(function (prevCount) {
-      if (prevCount < maximumA) return (prevCount += 1);
+    setPeople(function (prevCount) {
+      if (prevCount < maxPeople) return (prevCount += 1);
       else {
         return prevCount;
       }
@@ -63,11 +70,11 @@ const Booking = ({route, navigation}) => {
   }
 
   function decrement() {
-    setTables(function (prevCount) {
+    setPeople(function (prevCount) {
       if (prevCount > 1) {
         return (prevCount -= 1);
       } else {
-        return (prevCount = 1);
+        return (prevCount = 0);
       }
     });
   }
@@ -76,7 +83,7 @@ const Booking = ({route, navigation}) => {
     checkAvailableTable();
     checkRealTime();
     setClicked(id);
-    setTables(1);
+    setPeople(0);
   };
 
   const onComfirmPress = () => {
@@ -99,7 +106,7 @@ const Booking = ({route, navigation}) => {
     const check = item.times.shift[clicked - 1].tables.filter(
       e => e.status === 'unavailable',
     ).length;
-    setAvailable(16 - check);
+    setAvailable(item.times.shift[clicked - 1].tables.length - check);
     if (check < item.times.shift[clicked - 1].tables.length) {
       return setCheckTable(true);
     } else {
@@ -107,16 +114,16 @@ const Booking = ({route, navigation}) => {
     }
   };
 
-  const calculatorMaxPeople = () => {
-    const check = item.times.shift[clicked - 1].tables.filter(
-      e => e.status === 'unavailable',
-    ).length;
-    const allTables = item.times.shift[clicked - 1].tables.length;
-    const remainingTables = (allTables - check) * 4;
-    if (remainingTables < allTables * 4) {
-      setRemaining(remainingTables);
-    } else console.log('full slot.');
-  };
+  // const calculatorMaxTables = () => {
+  //   const check = item.times.shift[clicked - 1].tables.filter(
+  //     e => e.status === 'unavailable',
+  //   ).length;
+  //   const allTables = item.times.shift[clicked - 1].tables.length;
+  //   const remainingTables = (allTables - check) * 4;
+  //   if (remainingTables < allTables * 4) {
+  //     setRemaining(remainingTables);
+  //   } else console.log('full slot.');
+  // };
 
   const eatTime = moment(
     moment(date).format('DD/MM') +
@@ -133,9 +140,9 @@ const Booking = ({route, navigation}) => {
     }
   };
 
-  useEffect(() => {
-    calculatorMaxPeople();
-  }, [clicked, remaining]);
+  // useEffect(() => {
+  //   calculatorMaxTables();
+  // }, [clicked, remaining]);
 
   useEffect(() => {
     checkRealTime();
@@ -156,7 +163,8 @@ const Booking = ({route, navigation}) => {
         time: item.times.shift[clicked - 1].timeStart,
         restaurant: item.name,
         location: item.location,
-        people: tables,
+        people: people,
+        tableId: chooseId,
       };
       data.push(newOrder);
       await AsyncStorage.setItem('tables', JSON.stringify(data));
@@ -238,23 +246,26 @@ const Booking = ({route, navigation}) => {
               />
             </View>
             <View style={styles.peopleContainer}>
-              <View>
+              <View style={{flex: 11, marginRight: 20}}>
                 <Text style={styles.mealTimeText}>
                   <Ionicons
                     size={25}
                     color="black"
                     name="people-outline"></Ionicons>{' '}
-                  How many people?
+                  Number of people
                 </Text>
-                <Text>1 table with maximum of 4 seats for 4 adults</Text>
+                <Text>
+                  Only 1 table can be selected per booking, please choose a
+                  table with a reasonable number of seats.
+                </Text>
               </View>
-              <View>
+              <View style={{flex: 2}}>
                 <TouchableOpacity
                   style={styles.buttonQuantity}
                   onPress={increment}>
                   <Text style={styles.buttonTextQtt}>+</Text>
                 </TouchableOpacity>
-                <Text style={styles.quantityText}>{tables}</Text>
+                <Text style={styles.quantityText}>{people}</Text>
                 <TouchableOpacity
                   style={styles.buttonQuantity}
                   onPress={decrement}>
@@ -268,7 +279,7 @@ const Booking = ({route, navigation}) => {
                   color="black"
                   size={25}
                   name="time-outline"></Ionicons>{' '}
-                Meal times :
+                Meal times
               </Text>
               <View style={styles.mealTimes}>
                 {item.times.shift.map(e => {
@@ -309,26 +320,60 @@ const Booking = ({route, navigation}) => {
                             / {e.tables.length}
                           </Text>
                         </View>
-                        {/* {e.tables.map(e => {
-                        return (
-                          <TouchableOpacity style={styles.table} key={e.id}>
-                            {e.status === 'available' ? (
-                              <CheckBox
-                                disabled={true}
-                                value={true}
-                                style={styles.checkbox}
-                              />
-                            ) : (
-                              <CheckBox
-                                disabled={true}
-                                value={false}
-                                style={styles.checkbox}
-                              />
-                            )}
-                            <Text style={styles.tableName}>{e.name}</Text>
-                          </TouchableOpacity>
-                        );
-                      })} */}
+                        {e.tables.map(e => {
+                          return (
+                            people === 0 && (
+                              <TouchableOpacity style={styles.table} key={e.id}>
+                                {e.status === 'unavailable' ? (
+                                  <CheckBox
+                                    disabled={true}
+                                    value={true}
+                                    style={styles.checkbox}
+                                  />
+                                ) : (
+                                  <CheckBox
+                                    disabled={false}
+                                    value={false}
+                                    onValueChange={() =>
+                                      alert(
+                                        'Please choose number of people first !',
+                                      )
+                                    }
+                                    style={styles.checkbox}
+                                  />
+                                )}
+                                <Text style={styles.tableName}>{e.name}</Text>
+                              </TouchableOpacity>
+                            )
+                          );
+                        })}
+                        {e.tables
+                          .filter(e => {
+                            return (
+                              e.maxPeople >= people && people >= e.minPeople
+                            );
+                          })
+                          .map(e => {
+                            return (
+                              <TouchableOpacity style={styles.table} key={e.id}>
+                                {e.status === 'unavailable' ? (
+                                  <CheckBox
+                                    disabled={true}
+                                    value={true}
+                                    style={styles.checkbox}
+                                  />
+                                ) : (
+                                  <CheckBox
+                                    disabled={false}
+                                    value={chooseId === e.id}
+                                    onChange={() => handleChoose(e.id)}
+                                    style={styles.checkbox}
+                                  />
+                                )}
+                                <Text style={styles.tableName}>{e.name}</Text>
+                              </TouchableOpacity>
+                            );
+                          })}
                       </View>
                     )
                   );
@@ -389,11 +434,15 @@ const Booking = ({route, navigation}) => {
               </Text>
             </View>
             <View style={styles.info}>
+              <Ionicons color="black" size={30} name="grid-outline"></Ionicons>
+              <Text style={styles.infoText}>{chooseId}</Text>
+            </View>
+            <View style={styles.info}>
               <Ionicons
                 color="black"
                 size={30}
                 name="people-outline"></Ionicons>
-              <Text style={styles.infoText}>{tables}</Text>
+              <Text style={styles.infoText}>{people}</Text>
             </View>
             <View style={styles.info}>
               <Ionicons
@@ -488,7 +537,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 10,
-    height: 100,
+    height: 105,
     marginVertical: 10,
     justifyContent: 'space-between',
     shadowColor: '#000',
@@ -507,16 +556,19 @@ const styles = StyleSheet.create({
   },
   tables: {
     flexDirection: 'row',
+    rowGap: 5,
+    columnGap: 5,
     flexWrap: 'wrap',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
     marginVertical: 10,
   },
   tableAvaiText: {
     borderWidth: 1,
     borderRadius: 5,
+    paddingVertical: 5,
     marginVertical: 5,
-    marginLeft: 5,
-    padding: 5,
+    marginHorizontal: 5,
+    paddingHorizontal: 25,
     borderColor: 'black',
   },
   table: {
@@ -615,10 +667,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: 'white',
     fontSize: 20,
+    textAlign: 'center',
   },
   quantityText: {
     marginHorizontal: 10,
     textAlignVertical: 'center',
+    textAlign: 'center',
     fontWeight: '700',
     fontSize: 20,
     color: 'black',
@@ -643,7 +697,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 10,
-    height: 200,
+    maxHeight: 450,
     justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: {
