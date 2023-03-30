@@ -120,14 +120,14 @@ const Tables = ({route, navigation}) => {
               <Text style={styles.note}>
                 Reserved:{' '}
                 {
-                  DATA[0].times.shift[0].tables.filter(
+                  DATA[0].shift[0].tables.filter(
                     e => e.status === 'unavailable',
                   ).length
                 }{' '}
-                / {DATA[0].times.shift[0].tables.length}
+                / {DATA[0].shift[0].tables.length}
               </Text>
             </TouchableOpacity>
-            {DATA[0].times.shift[0].tables.map(e => {
+            {DATA[0].shift[0].tables.map(e => {
               return (
                 <TouchableOpacity
                   style={styles.table}

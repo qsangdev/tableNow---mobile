@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
+  Keyboard,
 } from 'react-native';
 import React, {useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -13,6 +14,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 const Rating = ({navigation}) => {
   const [defaultRating, setDefaultRating] = useState(0);
   const maxRating = [1, 2, 3, 4, 5];
+  const [comment, setComment] = useState('');
 
   const CustomRatingBar = () => {
     return (
@@ -42,38 +44,57 @@ const Rating = ({navigation}) => {
       <TouchableOpacity
         style={styles.buttonBack}
         onPress={() => navigation.navigate('Home')}>
-        <Ionicons name="home-outline" size={25} />
+        <Ionicons color="white" name="home-outline" size={25} />
       </TouchableOpacity>
       <Image style={styles.logo} source={require('../assets/logo.png')}></Image>
-      <Text style={styles.textStyle}>Rate your restaurant</Text>
-      <Text style={styles.emoji}>
-        {defaultRating == 1 ? (
-          <>
-            <Text>😡</Text> <Text>Bad</Text>
-          </>
-        ) : defaultRating == 2 ? (
-          <>
-            <Text>😞</Text> <Text>Not Good</Text>
-          </>
-        ) : defaultRating == 3 ? (
-          <>
-            <Text>😐</Text> <Text>So So</Text>
-          </>
-        ) : defaultRating == 4 ? (
-          <>
-            <Text>😊</Text> <Text>Great</Text>
-          </>
-        ) : defaultRating == 5 ? (
-          <>
-            <Text>😍</Text> <Text>Excellent</Text>
-          </>
-        ) : (
-          <Text>🤔</Text>
-        )}
-      </Text>
-      <CustomRatingBar />
+      <View style={styles.rateContainer}>
+        <Text style={styles.textStyle}>Rate your restaurant</Text>
+        <Text style={styles.emoji}>
+          {defaultRating == 1 ? (
+            <>
+              <Text>😡</Text>
+            </>
+          ) : defaultRating == 2 ? (
+            <>
+              <Text>😞</Text>
+            </>
+          ) : defaultRating == 3 ? (
+            <>
+              <Text>😐</Text>
+            </>
+          ) : defaultRating == 4 ? (
+            <>
+              <Text>😊</Text>
+            </>
+          ) : defaultRating == 5 ? (
+            <>
+              <Text>😍</Text>
+            </>
+          ) : (
+            <Text>🤔</Text>
+          )}
+        </Text>
+        <CustomRatingBar />
+      </View>
       <View style={styles.comment}>
-        <TextInput placeholder="Your comment .."></TextInput>
+        <TextInput
+          value={comment}
+          onChangeText={text => setComment(text)}
+          placeholder="Your comment .."></TextInput>
+        {comment ? (
+          <TouchableOpacity
+            onPress={() => {
+              setComment('');
+              Keyboard.dismiss();
+            }}>
+            <Ionicons
+              style={{marginTop: 10}}
+              name="close-circle"
+              size={25}
+              color="silver"
+            />
+          </TouchableOpacity>
+        ) : null}
       </View>
       <TouchableOpacity style={styles.buttonRate}>
         <Text style={styles.textRate}>Rate</Text>
@@ -102,7 +123,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 23,
     color: 'black',
-    marginVertical: 20,
   },
   customRatingBarStyle: {
     justifyContent: 'center',
@@ -119,11 +139,13 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 60,
+    textAlign: 'center',
+    marginVertical: 10,
   },
   buttonBack: {
     height: 45,
     width: 45,
-    backgroundColor: 'white',
+    backgroundColor: 'silver',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 25,
@@ -137,7 +159,6 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     marginHorizontal: 20,
-    marginBottom: 10,
     backgroundColor: 'green',
   },
   textRate: {
@@ -147,6 +168,37 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   comment: {
+    marginBottom: 20,
     width: '80%',
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
+  },
+  rateContainer: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 10,
+    height: 200,
+    width: '80%',
+    marginVertical: 20,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
   },
 });

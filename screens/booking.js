@@ -35,7 +35,6 @@ const Booking = ({route, navigation}) => {
   const [people, setPeople] = useState(0);
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
-  const [checkTable, setCheckTable] = useState(false);
   const [checkTime, setCheckTime] = useState(false);
 
   const [chooseId, setChooseId] = useState(0);
@@ -49,15 +48,11 @@ const Booking = ({route, navigation}) => {
 
   const [clicked, setClicked] = useState(1);
 
-  const [available, setAvailable] = useState();
+  // useEffect(() => {
+  //   checkAvailableTable();
+  // }, [available]);
 
-  useEffect(() => {
-    checkAvailableTable();
-  }, [available]);
-
-  const maxPeople = Math.max(
-    ...item.shift[0].tables.map(e => e.maxPeople),
-  );
+  const maxPeople = Math.max(...item.shift[0].tables.map(e => e.maxPeople));
 
   function increment() {
     //setCount(prevCount => prevCount+=1);
@@ -80,7 +75,7 @@ const Booking = ({route, navigation}) => {
   }
 
   const handleClick = id => {
-    checkAvailableTable();
+    // checkAvailableTable();
     checkRealTime();
     setClicked(id);
     setPeople(0);
@@ -91,8 +86,10 @@ const Booking = ({route, navigation}) => {
       return alert('Please enter your name');
     } else if (number === '') {
       return alert('Please enter your number..');
-    } else if (checkTable === false) {
-      return alert('The time you chose is full');
+    } else if (people === 0) {
+      return alert('Please choose number of people..');
+    } else if (chooseId === 0) {
+      return alert('Please choose your table!');
     } else if (checkTime === false) {
       return alert('The reservation time has passed');
     } else if (number.match(/(84|0[3|5|7|8|9])+([0-9]{8})\b/g)) {
@@ -102,17 +99,17 @@ const Booking = ({route, navigation}) => {
     }
   };
 
-  const checkAvailableTable = () => {
-    const check = item.shift[clicked - 1].tables.filter(
-      e => e.status === 'unavailable',
-    ).length;
-    setAvailable(item.shift[clicked - 1].tables.length - check);
-    if (check < item.shift[clicked - 1].tables.length) {
-      return setCheckTable(true);
-    } else {
-      setCheckTable(false);
-    }
-  };
+  // const checkAvailableTable = () => {
+  //   const check = item.shift[clicked - 1].tables.filter(
+  //     e => e.status === 'unavailable',
+  //   ).length;
+  //   setAvailable(item.shift[clicked - 1].tables.length - check);
+  //   if (check < item.shift[clicked - 1].tables.length) {
+  //     return setCheckTable(true);
+  //   } else {
+  //     setCheckTable(false);
+  //   }
+  // };
 
   // const calculatorMaxTables = () => {
   //   const check = item.shift[clicked - 1].tables.filter(
@@ -126,9 +123,7 @@ const Booking = ({route, navigation}) => {
   // };
 
   const eatTime = moment(
-    moment(date).format('DD/MM') +
-      ' ' +
-      item.shift[clicked - 1].timeStart,
+    moment(date).format('DD/MM') + ' ' + item.shift[clicked - 1].timeStart,
     'DD/MM HH:mm',
   );
 
@@ -148,9 +143,9 @@ const Booking = ({route, navigation}) => {
     checkRealTime();
   }, [clicked, checkTime, date]);
 
-  useEffect(() => {
-    checkAvailableTable();
-  }, [clicked, checkTable]);
+  // useEffect(() => {
+  //   checkAvailableTable();
+  // }, [clicked]);
 
   const sendRequest = async () => {
     try {
@@ -355,7 +350,10 @@ const Booking = ({route, navigation}) => {
                           })
                           .map(e => {
                             return (
-                              <TouchableOpacity style={styles.table} key={e.id}>
+                              <TouchableOpacity
+                                onPress={() => handleChoose(e.name)}
+                                style={styles.table}
+                                key={e.id}>
                                 {e.status === 'unavailable' ? (
                                   <CheckBox
                                     disabled={true}
@@ -365,8 +363,8 @@ const Booking = ({route, navigation}) => {
                                 ) : (
                                   <CheckBox
                                     disabled={false}
-                                    value={chooseId === e.id}
-                                    onChange={() => handleChoose(e.id)}
+                                    value={chooseId === e.name}
+                                    onChange={() => handleChoose(e.name)}
                                     style={styles.checkbox}
                                   />
                                 )}
