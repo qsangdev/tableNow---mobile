@@ -39,7 +39,7 @@ const Restaurant = ({route, navigation}) => {
       <TouchableOpacity
         style={styles.buttonBack}
         onPress={() => navigation.navigate('Home')}>
-        <Ionicons name="arrow-back" size={25} />
+        <Ionicons color="white" name="arrow-back" size={25} />
       </TouchableOpacity>
       <ScrollView>
         <View>
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   buttonBack: {
     height: 45,
     width: 45,
-    backgroundColor: 'white',
+    backgroundColor: 'silver',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 25,
@@ -210,6 +210,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   ratingText: {
     fontSize: 16,
@@ -237,8 +245,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignSelf: 'center',
     backgroundColor: 'white',
-    borderColor: 'black',
-    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   menuContainer: {
     marginBottom: 10,

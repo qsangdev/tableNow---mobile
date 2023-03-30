@@ -13,6 +13,7 @@ import {
   Alert,
   TextInput,
   FlatList,
+  Keyboard,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -327,7 +328,22 @@ const Home = ({navigation}) => {
                 placeholderTextColor="white"
                 onChangeText={text => setSearchText(text)}
                 style={styles.searchText}
+                value={searchText}
               />
+              {searchText ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchText('');
+                    Keyboard.dismiss();
+                  }}>
+                  <Ionicons
+                    style={{marginRight: 10}}
+                    name="close-circle-outline"
+                    size={20}
+                    color="white"
+                  />
+                </TouchableOpacity>
+              ) : null}
             </View>
             <Picker
               style={styles.picker}
