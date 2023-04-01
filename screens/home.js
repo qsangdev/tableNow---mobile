@@ -139,12 +139,24 @@ const Home = ({navigation}) => {
     }
   };
 
-  const handleDeleteItem = async id => {
+  const handleDeleteItem = id => {
     try {
-      const removeItem = [...tables].filter(item => item.id !== id);
-      await AsyncStorage.setItem('tables', JSON.stringify(removeItem));
-      setTables(removeItem);
-      allTables();
+      Alert.alert('Are you sure?', 'Delete this booked?', [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            const removeItem = [...tables].filter(item => item.id !== id);
+            await AsyncStorage.setItem('tables', JSON.stringify(removeItem));
+            setTables(removeItem);
+            allTables();
+          },
+        },
+      ]);
     } catch (e) {
       console.log(e);
     }
@@ -188,30 +200,32 @@ const Home = ({navigation}) => {
             <Text style={styles.name}>Table Now</Text>
           </View>
           <Modal animationType="slide" transparent={true} visible={openBooked}>
-            <View style={styles.modalContainer}>
-              <SafeAreaView style={styles.modalHeader}>
-                <TouchableOpacity onPress={tables && handleDeleteData}>
-                  <Ionicons
-                    size={30}
-                    color="maroon"
-                    name="trash-sharp"></Ionicons>
-                </TouchableOpacity>
-                <Text style={styles.modalText}>Booked List</Text>
-                <TouchableOpacity onPress={() => setOpenBooked(!openBooked)}>
-                  <Ionicons
-                    size={30}
-                    color="maroon"
-                    name="close-circle"></Ionicons>
-                </TouchableOpacity>
-              </SafeAreaView>
-              <ScrollView
-                style={styles.modalBox}
-                showsVerticalScrollIndicator={false}>
-                {tables ? (
-                  tables.map(e => {
-                    return (
-                      <View style={styles.bookedItem} key={e.id}>
-                        <View style={styles.itemsHeader}>
+            <View style={styles.backgroundModal}>
+              <View style={styles.modalContainer}>
+                <SafeAreaView style={styles.modalHeader}>
+                  <TouchableOpacity onPress={tables && handleDeleteData}>
+                    <Ionicons
+                      size={30}
+                      color="maroon"
+                      name="trash-sharp"></Ionicons>
+                  </TouchableOpacity>
+                  <Text style={styles.modalText}>Booked List</Text>
+                  <TouchableOpacity onPress={() => setOpenBooked(!openBooked)}>
+                    <Ionicons
+                      size={30}
+                      color="maroon"
+                      name="close-circle"></Ionicons>
+                  </TouchableOpacity>
+                </SafeAreaView>
+                <ScrollView
+                  style={styles.modalBox}
+                  showsVerticalScrollIndicator={false}>
+                  {!tables || tables.length === 0 ? (
+                    <Text style={styles.modalText}>Empty</Text>
+                  ) : (
+                    tables.map(e => {
+                      return (
+                        <View style={styles.bookedItem} key={e.id}>
                           <Text style={styles.itemText}>
                             <Ionicons
                               color="maroon"
@@ -220,83 +234,84 @@ const Home = ({navigation}) => {
                             {'  '}
                             {e.time}
                           </Text>
-                          <TouchableOpacity
-                            onPress={() => handleDeleteItem(e.id)}>
+
+                          <Text style={styles.itemText}>
                             <Ionicons
                               color="maroon"
-                              size={25}
-                              name="close-circle-outline"></Ionicons>
-                          </TouchableOpacity>
+                              size={20}
+                              name="restaurant-outline"></Ionicons>
+                            {'  '}
+                            {e.restaurant}
+                          </Text>
+                          <Text style={styles.itemText}>
+                            <Ionicons
+                              color="maroon"
+                              size={20}
+                              name="location-outline"></Ionicons>
+                            {'  '}
+                            {e.location}
+                          </Text>
+                          <Text style={styles.itemText}>
+                            <Ionicons
+                              color="maroon"
+                              size={20}
+                              name="calendar-outline"></Ionicons>
+                            {'  '}
+                            {e.date}
+                          </Text>
+                          <Text style={styles.itemText}>
+                            <Ionicons
+                              color="maroon"
+                              size={20}
+                              name="grid-outline"></Ionicons>
+                            {'  '}
+                            {e.tableId}
+                          </Text>
+                          <Text style={styles.itemText}>
+                            <Ionicons
+                              color="maroon"
+                              size={20}
+                              name="people-outline"></Ionicons>
+                            {'  '}
+                            {e.people}
+                          </Text>
+                          <Text style={styles.itemText}>
+                            <Ionicons
+                              color="maroon"
+                              size={20}
+                              name="person-circle-outline"></Ionicons>
+                            {'  '}
+                            {e.name}
+                          </Text>
+                          <View style={styles.itemsHeader}>
+                            <Text style={styles.itemText}>
+                              <Ionicons
+                                color="maroon"
+                                size={20}
+                                name="call-outline"></Ionicons>
+                              {'  '}
+                              {e.number}
+                            </Text>
+                            <TouchableOpacity
+                              onPress={() => handleDeleteItem(e.id)}>
+                              <Ionicons
+                                color="maroon"
+                                size={25}
+                                name="trash-outline"></Ionicons>
+                            </TouchableOpacity>
+                          </View>
                         </View>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="restaurant-outline"></Ionicons>
-                          {'  '}
-                          {e.restaurant}
-                        </Text>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="location-outline"></Ionicons>
-                          {'  '}
-                          {e.location}
-                        </Text>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="calendar-outline"></Ionicons>
-                          {'  '}
-                          {e.date}
-                        </Text>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="grid-outline"></Ionicons>
-                          {'  '}
-                          {e.tableId}
-                        </Text>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="people-outline"></Ionicons>
-                          {'  '}
-                          {e.people}
-                        </Text>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="person-circle-outline"></Ionicons>
-                          {'  '}
-                          {e.name}
-                        </Text>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="call-outline"></Ionicons>
-                          {'  '}
-                          {e.number}
-                        </Text>
-                      </View>
-                    );
-                  })
-                ) : (
-                  <Text style={styles.modalText}>Empty</Text>
-                )}
-                {tables ? (
-                  <Text style={{textAlign: 'center'}}>
-                    * Warning: Your booking will be automatically canceled if
-                    you check in 30 minutes late
-                  </Text>
-                ) : null}
-              </ScrollView>
+                      );
+                    })
+                  )}
+                  {!tables || tables.length === 0 ? null : (
+                    <Text style={{textAlign: 'center'}}>
+                      * Warning: Your booking will be automatically canceled if
+                      you check in 30 minutes late
+                    </Text>
+                  )}
+                </ScrollView>
+              </View>
             </View>
           </Modal>
           <View style={styles.headerButton}>
@@ -539,10 +554,14 @@ const styles = StyleSheet.create({
     color: '#006400',
     marginTop: 5,
   },
+  backgroundModal: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    flex: 1,
+  },
   modalContainer: {
     margin: 18,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#DCDCDC',
     padding: 10,
     shadowColor: '#000',
     shadowOffset: {

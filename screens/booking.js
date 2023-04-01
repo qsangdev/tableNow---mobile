@@ -171,6 +171,25 @@ const Booking = ({route, navigation}) => {
     }
   };
 
+  const autoFillLastInfo = async () => {
+    try {
+      const data = await AsyncStorage.getItem('tables');
+      if (!data || data.length === 0) {
+        return console.log('empty');
+      } else {
+        const allBooked = JSON.parse(data);
+        setName(allBooked[allBooked.length - 1].name);
+        setNumber(allBooked[allBooked.length - 1].number);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    autoFillLastInfo();
+  }, []);
+
   return (
     <>
       <ScrollView>
@@ -219,6 +238,15 @@ const Booking = ({route, navigation}) => {
                   name="calendar-outline"></Ionicons>{' '}
                 Date: {moment(date).format('DD/MM/YYYY')}
               </Text>
+              {moment(
+                moment(date).format('DD/MM') + ' ' + item.shift[2].timeStart,
+                'DD/MM HH:mm',
+              ).isBefore(moment()) ? (
+                <Text style={{marginBottom: 5, color: 'red'}}>
+                  Today's reservation time has passed, please select the next
+                  date !
+                </Text>
+              ) : null}
               <Button
                 color="black"
                 title="Choose your date"
@@ -249,7 +277,7 @@ const Booking = ({route, navigation}) => {
                     name="people-outline"></Ionicons>{' '}
                   Number of people
                 </Text>
-                <Text>
+                <Text style={{color: 'teal'}}>
                   Only 1 table can be selected per booking, please choose a
                   table with a reasonable number of seats.
                 </Text>
@@ -297,34 +325,31 @@ const Booking = ({route, navigation}) => {
                 })}
               </View>
               <View>
+                <View style={styles.tableAvaiText}>
+                  <Ionicons
+                    style={styles.note}
+                    size={30}
+                    name="restaurant-outline"></Ionicons>
+                  <Text style={styles.note}>
+                    Reserved:{' '}
+                    {
+                      item.shift[clicked - 1].tables.filter(
+                        e => e.status === 'unavailable',
+                      ).length
+                    }{' '}
+                    / {item.shift[clicked - 1].tables.length}
+                  </Text>
+                </View>
                 {item.shift.map(e => {
                   return (
                     e.id === clicked && (
                       <View style={styles.tables} key={e.id}>
-                        <View style={styles.tableAvaiText}>
-                          <Ionicons
-                            style={styles.note}
-                            size={30}
-                            name="restaurant-outline"></Ionicons>
-                          <Text style={styles.note}>
-                            Reserved:{' '}
-                            {
-                              e.tables.filter(e => e.status === 'unavailable')
-                                .length
-                            }{' '}
-                            / {e.tables.length}
-                          </Text>
-                        </View>
                         {e.tables.map(e => {
                           return (
                             people === 0 && (
                               <TouchableOpacity style={styles.table} key={e.id}>
                                 {e.status === 'unavailable' ? (
-                                  <CheckBox
-                                    disabled={true}
-                                    value={true}
-                                    style={styles.checkbox}
-                                  />
+                                  <CheckBox disabled={true} value={true} />
                                 ) : (
                                   <CheckBox
                                     disabled={false}
@@ -334,7 +359,6 @@ const Booking = ({route, navigation}) => {
                                         'Please choose number of people first !',
                                       )
                                     }
-                                    style={styles.checkbox}
                                   />
                                 )}
                                 <Text style={styles.tableName}>{e.name}</Text>
@@ -355,20 +379,28 @@ const Booking = ({route, navigation}) => {
                                 style={styles.table}
                                 key={e.id}>
                                 {e.status === 'unavailable' ? (
-                                  <CheckBox
-                                    disabled={true}
-                                    value={true}
-                                    style={styles.checkbox}
-                                  />
+                                  <>
+                                    <CheckBox
+                                      disabled={true}
+                                      value={true}
+                                      style={styles.checkbox}
+                                    />
+                                    <Text style={styles.tableName}>
+                                      {e.name}
+                                    </Text>
+                                  </>
                                 ) : (
-                                  <CheckBox
-                                    disabled={false}
-                                    value={chooseId === e.name}
-                                    onChange={() => handleChoose(e.name)}
-                                    style={styles.checkbox}
-                                  />
+                                  <>
+                                    <CheckBox
+                                      disabled={false}
+                                      value={chooseId === e.name}
+                                      onChange={() => handleChoose(e.name)}
+                                    />
+                                    <Text style={styles.tableNameAvai}>
+                                      {e.name}
+                                    </Text>
+                                  </>
                                 )}
-                                <Text style={styles.tableName}>{e.name}</Text>
                               </TouchableOpacity>
                             );
                           })}
@@ -387,76 +419,87 @@ const Booking = ({route, navigation}) => {
         </TouchableOpacity>
       </SafeAreaView>
       <Modal animationType="fade" transparent={true} visible={modalVisible}>
-        <View style={styles.modalView}>
-          <Image
-            style={styles.logo}
-            source={require('../assets/logo.png')}></Image>
-          <Text style={styles.mealTimeText}>Confirm information</Text>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setModalVisible(!modalVisible)}>
-            <Ionicons
-              size={40}
-              color="red"
-              name="close-circle-outline"></Ionicons>
-          </TouchableOpacity>
-          <View style={styles.infoContainer}>
-            <View style={styles.info}>
+        <View style={styles.backgroundModal}>
+          <View style={styles.modalView}>
+            <Image
+              style={styles.logo}
+              source={require('../assets/logo.png')}></Image>
+            <Text style={styles.mealTimeText}>Confirm information</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(!modalVisible)}>
               <Ionicons
-                color="black"
-                size={30}
-                name="restaurant-outline"></Ionicons>
-              <Text style={styles.infoText}>{item.name}</Text>
+                size={40}
+                color="red"
+                name="close-circle-outline"></Ionicons>
+            </TouchableOpacity>
+            <View style={styles.infoContainer}>
+              <View style={styles.info}>
+                <Ionicons
+                  color="black"
+                  size={30}
+                  name="restaurant-outline"></Ionicons>
+                <Text style={styles.infoText}>{item.name}</Text>
+              </View>
+              <View style={styles.info}>
+                <Ionicons
+                  color="black"
+                  size={30}
+                  name="location-outline"></Ionicons>
+                <Text style={styles.infoText}>{item.location}</Text>
+              </View>
+              <View style={styles.info}>
+                <Ionicons
+                  color="black"
+                  size={30}
+                  name="calendar-outline"></Ionicons>
+                <Text style={styles.infoText}>
+                  {moment(date).format('DD/MM/YYYY')}
+                </Text>
+              </View>
+              <View style={styles.info}>
+                <Ionicons
+                  color="black"
+                  size={30}
+                  name="time-outline"></Ionicons>
+                <Text style={styles.infoText}>
+                  {item.shift[clicked - 1].timeStart} -{' '}
+                  {item.shift[clicked - 1].timeEnd}
+                </Text>
+              </View>
+              <View style={styles.info}>
+                <Ionicons
+                  color="black"
+                  size={30}
+                  name="grid-outline"></Ionicons>
+                <Text style={styles.infoText}>{chooseId}</Text>
+              </View>
+              <View style={styles.info}>
+                <Ionicons
+                  color="black"
+                  size={30}
+                  name="people-outline"></Ionicons>
+                <Text style={styles.infoText}>{people}</Text>
+              </View>
+              <View style={styles.info}>
+                <Ionicons
+                  color="black"
+                  size={30}
+                  name="person-circle-outline"></Ionicons>
+                <Text style={styles.infoText}>{name}</Text>
+              </View>
+              <View style={styles.info}>
+                <Ionicons
+                  color="black"
+                  size={30}
+                  name="call-outline"></Ionicons>
+                <Text style={styles.infoText}>{number}</Text>
+              </View>
             </View>
-            <View style={styles.info}>
-              <Ionicons
-                color="black"
-                size={30}
-                name="location-outline"></Ionicons>
-              <Text style={styles.infoText}>{item.location}</Text>
-            </View>
-            <View style={styles.info}>
-              <Ionicons
-                color="black"
-                size={30}
-                name="calendar-outline"></Ionicons>
-              <Text style={styles.infoText}>
-                {moment(date).format('DD/MM/YYYY')}
-              </Text>
-            </View>
-            <View style={styles.info}>
-              <Ionicons color="black" size={30} name="time-outline"></Ionicons>
-              <Text style={styles.infoText}>
-                {item.shift[clicked - 1].timeStart} -{' '}
-                {item.shift[clicked - 1].timeEnd}
-              </Text>
-            </View>
-            <View style={styles.info}>
-              <Ionicons color="black" size={30} name="grid-outline"></Ionicons>
-              <Text style={styles.infoText}>{chooseId}</Text>
-            </View>
-            <View style={styles.info}>
-              <Ionicons
-                color="black"
-                size={30}
-                name="people-outline"></Ionicons>
-              <Text style={styles.infoText}>{people}</Text>
-            </View>
-            <View style={styles.info}>
-              <Ionicons
-                color="black"
-                size={30}
-                name="person-circle-outline"></Ionicons>
-              <Text style={styles.infoText}>{name}</Text>
-            </View>
-            <View style={styles.info}>
-              <Ionicons color="black" size={30} name="call-outline"></Ionicons>
-              <Text style={styles.infoText}>{number}</Text>
-            </View>
+            <TouchableOpacity onPress={sendRequest} style={styles.button}>
+              <Text style={styles.textStyle}>Start Booking</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={sendRequest} style={styles.button}>
-            <Text style={styles.textStyle}>Start Booking</Text>
-          </TouchableOpacity>
         </View>
       </Modal>
     </>
@@ -491,7 +534,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 10,
-    height: 100,
+    maxHeight: 135,
     justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: {
@@ -536,7 +579,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     height: 105,
-    marginVertical: 10,
+    marginVertical: 15,
     justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: {
@@ -548,9 +591,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   note: {
-    color: 'black',
+    color: 'teal',
     fontWeight: '700',
     textAlign: 'center',
+    marginHorizontal: 5,
   },
   tables: {
     flexDirection: 'row',
@@ -564,13 +608,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     paddingVertical: 5,
-    marginVertical: 5,
     marginHorizontal: 5,
-    paddingHorizontal: 25,
+    marginTop: 5,
     borderColor: 'black',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   table: {
-    padding: 5,
+    padding: 11,
     margin: 5,
     borderWidth: 1,
     borderRadius: 5,
@@ -578,6 +624,11 @@ const styles = StyleSheet.create({
   tableName: {
     alignSelf: 'center',
     fontWeight: '800',
+  },
+  tableNameAvai: {
+    alignSelf: 'center',
+    fontWeight: '800',
+    color: 'teal',
   },
   buttonContainer: {
     paddingHorizontal: 20,
@@ -662,6 +713,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
     paddingHorizontal: 10,
     borderRadius: 5,
+    paddingVertical: 1,
   },
   buttonTextQtt: {
     fontWeight: '800',
@@ -682,7 +734,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     height: 110,
-    marginVertical: 10,
+    marginTop: 10,
+    marginBottom: 15,
     justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: {
@@ -697,7 +750,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 10,
-    maxHeight: 450,
+    maxHeight: 550,
     justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: {
@@ -707,5 +760,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
     elevation: 3,
+  },
+  backgroundModal: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    flex: 1,
   },
 });
