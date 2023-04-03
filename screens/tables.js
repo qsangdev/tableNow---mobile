@@ -33,7 +33,6 @@ const Tables = ({route, navigation}) => {
   const [tables, setTables] = useState([]);
   const [openMenu, setOpenMenu] = useState(false);
   const [tableName, setTableName] = useState('');
-  const [quantity, setQuantity] = useState(0);
 
   useEffect(() => {
     const refesh = navigation.addListener('focus', () => {
@@ -48,27 +47,45 @@ const Tables = ({route, navigation}) => {
       const data = await AsyncStorage.getItem('tables');
       const allBooked = JSON.parse(data);
       setTables(allBooked);
-      setBooked(allBooked.length);
     } catch (e) {
       console.log(e);
+    }
+  };
+
+  const storeValue = async (table, item, value) => {
+    try {
+      let stringValue = value.toString();
+      let key = table + '_' + item;
+      await AsyncStorage.setItem(key, stringValue);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const logData = async () => {
+    try {
+      let keys = await AsyncStorage.getAllKeys();
+      let values = await AsyncStorage.multiGet(keys);
+      console.log(values);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const getValue = async (table, item) => {
+    try {
+      let key = table + '_' + item;
+      let stringValue = await AsyncStorage.getItem(key);
+      let numValue = Number(stringValue) || 0;
+      return numValue;
+    } catch (error) {
+      console.error(error);
     }
   };
 
   return (
     <>
       <View style={styles.container}>
-        {/* <View style={styles.header}>
-            <View style={styles.headerContent}>
-              <Image
-                style={styles.avatar}
-                source={{
-                  uri: 'https://bootdey.com/img/Content/avatar/avatar1.png',
-                }}
-              />
-  
-              <Text style={styles.name}>John Smith</Text>
-            </View>
-          </View> */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.welcomeButton}
@@ -92,8 +109,18 @@ const Tables = ({route, navigation}) => {
               }></Ionicons>
           </TouchableOpacity>
           {clicked && (
-            <TouchableOpacity style={styles.roundButton}>
-              <Text style={styles.buttonText}>Profile</Text>
+            <TouchableOpacity
+              style={styles.roundButton}
+              onPress={() =>
+                navigation.navigate('Profile', {
+                  tableName: tableName,
+                  onGoBack: () => {
+                    setOpenMenu(false);
+                    setTableName('');
+                  },
+                })
+              }>
+              {/* <Text style={styles.buttonText}>Profile</Text> */}
               <Ionicons
                 size={30}
                 color={'white'}
@@ -101,8 +128,8 @@ const Tables = ({route, navigation}) => {
             </TouchableOpacity>
           )}
           {clicked && (
-            <TouchableOpacity style={styles.roundButton}>
-              <Text style={styles.buttonText}>Log Out</Text>
+            <TouchableOpacity style={styles.roundButton} onPress={logData}>
+              {/* <Text style={styles.buttonText}>Log Out</Text> */}
               <Ionicons
                 size={30}
                 color={'white'}
@@ -111,14 +138,14 @@ const Tables = ({route, navigation}) => {
           )}
         </View>
 
-        <View style={styles.tableContainer}>
+        <ScrollView>
           <View style={styles.tables}>
             <TouchableOpacity
               style={styles.tableAvaiText}
               onPress={() => setOpenBooked(!openBooked)}>
               <Ionicons size={30} name="restaurant-outline"></Ionicons>
+              <Text style={styles.note}>Reserved: </Text>
               <Text style={styles.note}>
-                Reserved:{' '}
                 {
                   DATA[0].shift[0].tables.filter(
                     e => e.status === 'unavailable',
@@ -128,6 +155,10 @@ const Tables = ({route, navigation}) => {
               </Text>
             </TouchableOpacity>
             {DATA[0].shift[0].tables.map(e => {
+<<<<<<< HEAD
+=======
+              const [isSelected, setSelection] = useState(false);
+>>>>>>> 0babe0d (invoice profile)
               return (
                 <TouchableOpacity
                   style={styles.table}
@@ -141,28 +172,35 @@ const Tables = ({route, navigation}) => {
                       : () => {}
                   }>
                   {e.status === 'available' ? (
-                    <CheckBox
-                      //   disabled={true}
-                      value={false}
-                      style={styles.checkbox}
-                    />
+                    <CheckBox value={false} style={styles.checkbox} />
                   ) : (
-                    <CheckBox
-                      //   disabled={true}
-                      value={true}
-                      style={styles.checkbox}
-                    />
+                    <CheckBox value={true} style={styles.checkbox} />
                   )}
                   <Text style={styles.tableName}>{e.name}</Text>
+                  <Text style={styles.tableName}>
+                    <Ionicons name="person" size={16} /> {e.minPeople}
+                  </Text>
+                  <Text style={styles.tableName}>
+                    <Ionicons name="people" size={16} /> {e.maxPeople}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
-        </View>
+        </ScrollView>
         <Modal animationType="slide" transparent={true} visible={openMenu}>
           <View style={styles.modalContainer}>
             <SafeAreaView style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => {}}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('Invoice', {
+                    tableName: tableName,
+                    onGoBack: () => {
+                      setOpenMenu(false);
+                      setTableName('');
+                    },
+                  })
+                }>
                 <Ionicons
                   size={30}
                   color="maroon"
@@ -179,18 +217,35 @@ const Tables = ({route, navigation}) => {
             <ScrollView style={styles.modalBox}>
               <View style={styles.menuContainer}>
                 {DATA[0].menu.map(e => {
+                  const [numValue, setNumValue] = useState(0);
+                  useEffect(() => {
+                    // Define an async function to get the value
+                    const getValueAsync = async () => {
+                      // Get the value using await
+                      let value = await getValue(tableName, e.id);
+                      // Update the state variable with the value
+                      setNumValue(value);
+                    };
+                    // Call the async function
+                    getValueAsync();
+                  }, [tableName, e.id]); // Add tableName and e.id as dependencies
                   return (
                     <View style={styles.menu} key={e.id}>
                       <Image style={styles.menuImage} source={{uri: e.image}} />
                       <Text style={styles.menuItem}>{e.title}</Text>
                       <Text>${e.price}</Text>
                       <NumericInput
+                        key={numValue}
                         type="plus-minus"
                         minValue={0}
                         maxValue={64}
                         totalWidth={100}
                         totalHeight={35}
-                        onChange={value => console.log(value)}
+                        value={numValue}
+                        onChange={value => {
+                          storeValue(tableName, e.id, value);
+                          setNumValue(value);
+                        }}
                       />
                     </View>
                   );
@@ -284,10 +339,15 @@ const Tables = ({route, navigation}) => {
 export default Tables;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   header: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginHorizontal: 30,
+    marginTop: 5,
   },
   headerContent: {
     padding: 30,
@@ -316,17 +376,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-around',
     marginVertical: 10,
+    marginHorizontal: 20,
   },
   tableAvaiText: {
     borderWidth: 1,
     borderRadius: 5,
-    marginVertical: 5,
-    marginLeft: 5,
+    margin: 5,
     padding: 2,
     borderColor: 'black',
-    width: 120,
+    width: 100,
     marginRight: 5,
-    height: 70,
+    height: 120,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -335,25 +395,24 @@ const styles = StyleSheet.create({
     margin: 5,
     borderWidth: 1,
     borderRadius: 5,
-    width: 54,
-    height: 70,
+    width: 100,
+    height: 120,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   tableName: {
     alignSelf: 'center',
     fontWeight: '800',
+    fontSize: 16,
   },
   welcomeButton: {
-    padding: 5,
+    padding: 10,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 23,
+    borderRadius: 15,
     alignItems: 'center',
     marginTop: 10,
     height: 55,
-    marginLeft: 5,
-    marginRight: 5,
     display: 'flex',
-    justifyContent: 'flex-start',
     flexDirection: 'row',
     gap: 8,
     alignSelf: 'flex-start',
@@ -361,15 +420,14 @@ const styles = StyleSheet.create({
   roundButton: {
     padding: 5,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 23,
+    borderRadius: 15,
     alignItems: 'center',
     marginTop: 10,
     height: 55,
+    width: 55,
     display: 'flex',
     justifyContent: 'center',
-    flexDirection: 'row',
     gap: 8,
-    marginRight: 5,
   },
   buttonText: {
     color: 'white',

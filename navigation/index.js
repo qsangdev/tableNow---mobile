@@ -7,6 +7,8 @@ import Booking from '../screens/booking';
 import Rating from '../screens/rating';
 import Login from '../screens/login';
 import Tables from '../screens/tables';
+import Invoice from '../screens/Invoice';
+import Profile from '../screens/profile';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,6 +33,16 @@ function MyStack() {
       <Stack.Screen
         name="Tables"
         component={Tables}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Invoice"
+        component={Invoice}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={Profile}
         options={{headerShown: false}}
       />
       <Stack.Screen
