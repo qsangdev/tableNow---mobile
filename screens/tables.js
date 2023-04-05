@@ -30,9 +30,12 @@ const IMG_WIDTH = width / 2 - 60;
 const Tables = ({route, navigation}) => {
   const [clicked, setClicked] = useState(false);
   const [openBooked, setOpenBooked] = useState(false);
+  const [openGuest, setOpenGuest] = useState(false);
   const [tables, setTables] = useState([]);
   const [openMenu, setOpenMenu] = useState(false);
   const [tableName, setTableName] = useState('');
+  const [selectedTableIndex, setSelectedTableIndex] = useState(-1);
+  const [setSelectionFunctions, setSetSelectionFunctions] = useState([]);
 
   useEffect(() => {
     const refesh = navigation.addListener('focus', () => {
@@ -81,6 +84,52 @@ const Tables = ({route, navigation}) => {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handleOpenGuest = () => {
+    setOpenGuest(!openGuest);
+  };
+
+  const ModalComponent = props => {
+    // Get the props
+    const {setSelection} = props;
+
+    // Return the modal UI
+    return (
+      <Modal animationType="slide" transparent={true} visible={openGuest}>
+        <View style={styles.modalContainer1}>
+          <SafeAreaView style={styles.modalHeader}>
+            <TouchableOpacity
+              onPress={() => {
+                setOpenGuest(!openGuest);
+                setOpenMenu(!openMenu);
+                setSelection(true);
+              }}>
+              <Ionicons size={30} color="maroon" name="send"></Ionicons>
+            </TouchableOpacity>
+            <Text style={styles.modalText}>Table {tableName}</Text>
+            <TouchableOpacity onPress={() => handleOpenGuest()}>
+              <Ionicons size={30} color="maroon" name="close-circle"></Ionicons>
+            </TouchableOpacity>
+          </SafeAreaView>
+          <ScrollView style={styles.modalBox}>
+            <View>
+              <TextInput
+                style={styles.input}
+                placeholder="Guest name"></TextInput>
+              <TextInput
+                placeholder="Guest phone number"
+                keyboardType="numeric"
+                style={styles.input}></TextInput>
+              <TextInput
+                placeholder="Number of guests"
+                keyboardType="numeric"
+                style={styles.input}></TextInput>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+    );
   };
 
   return (
@@ -154,36 +203,57 @@ const Tables = ({route, navigation}) => {
                 / {DATA[0].shift[0].tables.length}
               </Text>
             </TouchableOpacity>
-            {DATA[0].shift[0].tables.map(e => {
-<<<<<<< HEAD
-=======
+            {DATA[0].shift[0].tables.map((e, index) => {
               const [isSelected, setSelection] = useState(false);
->>>>>>> 0babe0d (invoice profile)
+              setSelectionFunctions.push(setSelection); // push each setSelection function to the setSelectionFunctions array
               return (
-                <TouchableOpacity
-                  style={styles.table}
-                  key={e.id}
-                  onPress={
-                    e.status === 'unavailable'
-                      ? () => {
-                          setOpenMenu(!openMenu);
-                          setTableName(e.name);
-                        }
-                      : () => {}
-                  }>
-                  {e.status === 'available' ? (
-                    <CheckBox value={false} style={styles.checkbox} />
-                  ) : (
-                    <CheckBox value={true} style={styles.checkbox} />
+                <View key={e.id}>
+                  <TouchableOpacity
+                    style={styles.table}
+                    onPress={
+                      e.status === 'unavailable'
+                        ? () => {
+                            setOpenMenu(!openMenu);
+                            setTableName(e.name);
+                          }
+                        : () => {
+                            handleOpenGuest();
+                            setTableName(e.name);
+                            setSelectedTableIndex(index);
+                          }
+                    }>
+                    {e.status === 'available' ? (
+                      <CheckBox
+                        tintColors={'green'}
+                        disabled={true}
+                        value={isSelected}
+                        style={styles.checkbox}
+                        onValueChange={setSelection}
+                      />
+                    ) : (
+                      <CheckBox
+                        tintColors={'green'}
+                        disabled={true}
+                        value={!isSelected}
+                        style={styles.checkbox}
+                        onValueChange={setSelection}
+                      />
+                    )}
+                    <Text style={styles.tableName}>{e.name}</Text>
+                    <Text style={styles.tableName}>
+                      <Ionicons name="person" size={16} /> {e.minPeople}
+                    </Text>
+                    <Text style={styles.tableName}>
+                      <Ionicons name="people" size={16} /> {e.maxPeople}
+                    </Text>
+                  </TouchableOpacity>
+                  {selectedTableIndex === index && (
+                    <ModalComponent
+                      setSelection={setSelectionFunctions[selectedTableIndex]}
+                      visible={selectedTableIndex === index}
+                    />
                   )}
-                  <Text style={styles.tableName}>{e.name}</Text>
-                  <Text style={styles.tableName}>
-                    <Ionicons name="person" size={16} /> {e.minPeople}
-                  </Text>
-                  <Text style={styles.tableName}>
-                    <Ionicons name="people" size={16} /> {e.maxPeople}
-                  </Text>
-                </TouchableOpacity>
+                </View>
               );
             })}
           </View>
@@ -331,6 +401,42 @@ const Tables = ({route, navigation}) => {
             </ScrollView>
           </View>
         </Modal>
+
+        {/* <Modal animationType="slide" transparent={true} visible={openGuest}>
+          <View style={styles.modalContainer1}>
+            <SafeAreaView style={styles.modalHeader}>
+              <TouchableOpacity
+                onPress={() => {
+                  setOpenGuest(!openGuest);
+                  setOpenMenu(!openMenu);
+                }}>
+                <Ionicons size={30} color="maroon" name="send"></Ionicons>
+              </TouchableOpacity>
+              <Text style={styles.modalText}>Table {tableName}</Text>
+              <TouchableOpacity onPress={() => handleOpenGuest()}>
+                <Ionicons
+                  size={30}
+                  color="maroon"
+                  name="close-circle"></Ionicons>
+              </TouchableOpacity>
+            </SafeAreaView>
+            <ScrollView style={styles.modalBox}>
+              <View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Guest name"></TextInput>
+                <TextInput
+                  placeholder="Guest phone number"
+                  keyboardType="numeric"
+                  style={styles.input}></TextInput>
+                <TextInput
+                  placeholder="Number of guests"
+                  keyboardType="numeric"
+                  style={styles.input}></TextInput>
+              </View>
+            </ScrollView>
+          </View>
+        </Modal> */}
       </View>
     </>
   );
@@ -452,6 +558,23 @@ const styles = StyleSheet.create({
     borderColor: 'black',
     borderWidth: 1,
   },
+  modalContainer1: {
+    margin: 5,
+    height: 300,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 12,
+    },
+    shadowOpacity: 0.58,
+    shadowRadius: 16.0,
+    elevation: 24,
+    borderColor: 'black',
+    borderWidth: 1,
+  },
   modalBox: {
     marginBottom: 10,
   },
@@ -471,11 +594,13 @@ const styles = StyleSheet.create({
   bookedItem: {
     padding: 10,
     marginVertical: 5,
-    backgroundColor: 'silver',
     borderRadius: 20,
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: 'maroon',
   },
   itemText: {
-    fontSize: 12,
+    fontSize: 14,
     color: 'black',
     fontWeight: '700',
     textAlignVertical: 'center',
@@ -514,5 +639,31 @@ const styles = StyleSheet.create({
     width: '100%',
     height: IMG_WIDTH + 30,
     borderRadius: 20,
+  },
+  input: {
+    height: 40,
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: 'black',
+    flex: 1,
+    marginVertical: 10,
+  },
+  inputContainer: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 10,
+    height: 110,
+    marginTop: 10,
+    marginBottom: 15,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
   },
 });

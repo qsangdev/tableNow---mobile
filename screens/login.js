@@ -6,16 +6,22 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 
 const Login = ({navigation}) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
   const onPressLogin = () => {
-    navigation.navigate('Tables');
+    // check if email and password are not empty
+    if (username && password) {
+      navigation.navigate('Tables');
+    } else {
+      // alert user to fill in all inputs
+      Alert.alert('Please fill in all inputs');
+    }
   };
-  const [state, setState] = useState({
-    email: '',
-    password: '',
-  });
   return (
     <View style={styles.container}>
       <View>
@@ -27,7 +33,8 @@ const Login = ({navigation}) => {
         <TextInput
           style={styles.inputText}
           placeholder="Username"
-          onChangeText={text => setState({email: text})}
+          onChangeText={setUsername}
+          value={username}
         />
       </View>
       <View style={styles.inputView}>
@@ -35,7 +42,8 @@ const Login = ({navigation}) => {
           style={styles.inputText}
           secureTextEntry
           placeholder="Password"
-          onChangeText={text => setState({password: text})}
+          onChangeText={setPassword}
+          value={password}
         />
       </View>
       <TouchableOpacity onPress={onPressLogin} style={styles.loginBtn}>
