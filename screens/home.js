@@ -17,18 +17,20 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import DATA from '../hardData/DATA';
 import GetLocation from 'react-native-get-location';
 import {getDistance} from 'geolib';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Picker} from '@react-native-picker/picker';
 import {sortByDistance} from 'sort-by-distance';
+import axios from 'axios';
 
 const {width} = Dimensions.get('window');
 const {height} = Dimensions.get('window');
 const ITEM_WIDTH = width / 2 - 30;
 
 const Home = ({navigation}) => {
+  const [DATA, setDATA] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [booked, setBooked] = useState(0);
   const [openBooked, setOpenBooked] = useState(false);
@@ -101,6 +103,7 @@ const Home = ({navigation}) => {
   useEffect(() => {
     const refesh = navigation.addListener('focus', () => {
       allTables();
+      getDATA();
     });
     return refesh;
   }, []);
@@ -162,33 +165,37 @@ const Home = ({navigation}) => {
     }
   };
 
-  const filterRestaurant = () => {
-    return DATA.filter(e =>
-      e.name.toLocaleLowerCase().includes(searchText.toLocaleLowerCase()),
-    );
+  const getDATA = async () => {
+    setLoading(true);
+    await axios
+      .get('http://10.0.2.2:3001/api/profile/getAll')
+      .then(res => {
+        setLoading(false);
+        setDATA(res.data.data.filter(e => e.active === true));
+      })
+      .catch(err => console.log(err));
   };
 
-  const sortByRating = () => {
-    return DATA.sort((a, b) => b.rating - a.rating);
-  };
+  useEffect(() => {
+    getDATA();
+  }, []);
 
-  const sortByDiscount = () => {
-    return DATA.sort((a, b) => b.discount - a.discount);
-  };
-
-  // const origin = {
-  //   x: currentLocation.longitude,
-  //   y: currentLocation.latitude,
+  // const filterRestaurant = () => {
+  //   if (loading === false || DATA !== '') {
+  //     return DATA.filter(e =>
+  //       e.restaurantName
+  //         .toLocaleLowerCase()
+  //         .includes(searchText.toLocaleLowerCase()),
+  //     );
+  //   } else setLoading(true);
   // };
 
-  // const points = DATA.map(e => {
-  //   return {x: e.longitude, y: e.latitude};
-  // });
+  // const sortByRating = () => {
+  //   return DATA.sort((a, b) => b.rating - a.rating);
+  // };
 
-  // const sortByDistanceFunction = () => {
-  //   return sortByDistance(origin, points).sort(
-  //     (a, b) => a.distance - b.distance,
-  //   );
+  // const sortByDiscount = () => {
+  //   return DATA.sort((a, b) => b.discount - a.discount);
   // };
 
   return (
@@ -324,7 +331,7 @@ const Home = ({navigation}) => {
           </View>
         </View>
       </SafeAreaView>
-      {loading ? (
+      {loading || DATA === '' ? (
         <View style={styles.loading}>
           <ActivityIndicator size="large" color="black" />
         </View>
@@ -371,14 +378,15 @@ const Home = ({navigation}) => {
               <Picker.Item label="Sort by Distance" value="distance" />
             </Picker>
 
-            {filterRestaurant().length > 0 ? (
+            {DATA !== '' ? (
               <FlatList
                 data={
-                  sort === 'rating'
-                    ? sortByRating() && filterRestaurant()
-                    : sort === 'discount'
-                    ? sortByDiscount() && filterRestaurant()
-                    : filterRestaurant()
+                  // sort === 'rating'
+                  //   ? sortByRating() && filterRestaurant()
+                  //   : sort === 'discount'
+                  //   ? sortByDiscount() && filterRestaurant()
+                  //   :
+                  DATA
                 }
                 numColumns={2}
                 renderItem={({item, index}) => {
@@ -389,22 +397,29 @@ const Home = ({navigation}) => {
                       onPress={() => {
                         navigation.navigate('Restaurant', {
                           item: item,
-                          location: currentLocation,
+                          // location: currentLocation,
                         });
                       }}>
-                      <Image style={styles.itemImage} source={item.images[0]} />
+                      <Image
+                        style={styles.itemImage}
+                        source={{
+                          uri:
+                            item.images.length === 0
+                              ? 'https://t3.ftcdn.net/jpg/04/62/93/66/360_F_462936689_BpEEcxfgMuYPfTaIAOC1tCDurmsno7Sp.jpg'
+                              : item.images[0],
+                        }}
+                      />
                       <Text style={styles.itemDescription}>
-                        {item.name}{' '}
-                        <View style={styles.ratingBox}>
-                          <Ionicons
-                            name="star-outline"
-                            color="black"
-                            size={15}
-                          />
-                          <Text style={styles.ratingText}>{item.rating}</Text>
-                        </View>
+                        {item.restaurantName}{' '}
                       </Text>
-                      <Text>
+                      <View style={styles.ratingBox}>
+                        <Ionicons name="star-outline" color="black" size={17} />
+
+                        <Text style={styles.ratingText}>
+                          {item.rating ? item.rating : 0}
+                        </Text>
+                      </View>
+                      {/* <Text>
                         {getDistance(
                           {
                             latitude: currentLocation.latitude,
@@ -416,9 +431,9 @@ const Home = ({navigation}) => {
                           },
                         ) / 1000}{' '}
                         KM
-                      </Text>
+                      </Text> */}
                       <Text style={styles.itemDiscount}>
-                        Max discount {item.discount}%
+                        Max discount {item.maxDicount}%
                       </Text>
                     </TouchableOpacity>
                   );
@@ -542,9 +557,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'yellow',
     padding: 2,
     borderRadius: 5,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    zIndex: 1,
+    width: 50,
   },
   ratingText: {
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: '600',
     marginLeft: 5,
     color: 'black',

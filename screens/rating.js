@@ -10,11 +10,48 @@ import {
 } from 'react-native';
 import React, {useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import axios from 'axios';
 
-const Rating = ({navigation}) => {
+const Rating = ({route, navigation}) => {
+  const item = route.params.item;
+
   const [defaultRating, setDefaultRating] = useState(0);
   const maxRating = [1, 2, 3, 4, 5];
   const [comment, setComment] = useState('');
+  const [average, setAverage] = useState('');
+
+  const handleRating = async () => {
+    await axios
+      .post('http://10.0.2.2:3001/api/rating/create/', {
+        restaurantID: item.restaurantID,
+        ratingName: 'example guest',
+        ratingStar: defaultRating,
+        ratingComment: comment,
+      })
+      .then(async res => {
+        await axios
+          .get(
+            `http://10.0.2.2:3001/api/rating/get-details/${item.restaurantID}`,
+          )
+          .then(async res => {
+            await axios.put(
+              `http://10.0.2.2:3001/api/profile/update/${item._id}`,
+              {
+                rating:
+                  res.data.data.reduce((s, a) => s + a.ratingStar, 0) /
+                  res.data.data.length,
+              },
+            );
+          });
+        if (res.data.status === 'OK') {
+          alert(res.data.message);
+          navigation.navigate('Home');
+        } else {
+          alert(res.data.message);
+        }
+      })
+      .catch(err => console.log(err));
+  };
 
   const CustomRatingBar = () => {
     return (
@@ -96,7 +133,7 @@ const Rating = ({navigation}) => {
           </TouchableOpacity>
         ) : null}
       </View>
-      <TouchableOpacity style={styles.buttonRate}>
+      <TouchableOpacity onPress={handleRating} style={styles.buttonRate}>
         <Text style={styles.textRate}>Rate</Text>
       </TouchableOpacity>
     </SafeAreaView>
