@@ -8,10 +8,12 @@ import {
   Dimensions,
   TouchableOpacity,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {getDistance} from 'geolib';
+import axios from 'axios';
 
 const {height} = Dimensions.get('window');
 const {width} = Dimensions.get('window');
@@ -23,6 +25,9 @@ const Restaurant = ({route, navigation}) => {
   const location = route.params.location;
   const [imgActive, setImgActive] = useState(0);
 
+  const [loading, setLoading] = useState(false);
+  const [dataMenu, setDataMenu] = useState([]);
+
   onchange = nativeEvent => {
     if (nativeEvent) {
       const slide = Math.ceil(
@@ -33,6 +38,21 @@ const Restaurant = ({route, navigation}) => {
       }
     }
   };
+
+  const getDataMenu = async () => {
+    setLoading(true);
+    await axios
+      .get(`http://10.0.2.2:3001/api/dish/get/${item.restaurantID}`)
+      .then(res => {
+        setLoading(false);
+        setDataMenu(res.data.data);
+      })
+      .catch(err => console.log(err));
+  };
+
+  useEffect(() => {
+    getDataMenu();
+  }, []);
 
   return (
     <>
@@ -63,7 +83,7 @@ const Restaurant = ({route, navigation}) => {
                 <ImageBackground
                   key={index}
                   resizeMode="stretch"
-                  source={e}
+                  source={{uri: e}}
                   style={styles.wrap}></ImageBackground>
               ))}
             </ScrollView>
@@ -71,18 +91,25 @@ const Restaurant = ({route, navigation}) => {
           <View style={styles.container}>
             <View style={styles.titleContainer}>
               <View style={styles.title}>
-                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.name}>{item.restaurantName}</Text>
               </View>
               <TouchableOpacity
                 style={styles.rating}
-                onPress={() => navigation.navigate('Rating')}>
-                <Ionicons name="star-outline" color="black" size={17} />
-                <Text style={styles.ratingText}>{item.rating}</Text>
+                onPress={() =>
+                  navigation.navigate('Rating', {
+                    item: item,
+                  })
+                }>
+                <Ionicons name="star-outline" color="black" size={20} />
+
+                <Text style={styles.ratingText}>
+                  {item.rating ? item.rating : 0}
+                </Text>
               </TouchableOpacity>
             </View>
             <View style={styles.location}>
-              <Text>{item.location}</Text>
-              <Text>
+              <Text>{item.restaurantAddress}</Text>
+              {/* <Text>
                 {getDistance(
                   {
                     latitude: location.latitude,
@@ -94,28 +121,75 @@ const Restaurant = ({route, navigation}) => {
                   },
                 ) / 1000}{' '}
                 KM
-              </Text>
+              </Text> */}
             </View>
             <View style={styles.time}>
               <Ionicons name="alarm-outline" color="black" size={22} />
               <Text style={styles.timeText}>
-                <Text>Opening Time:</Text> {item.shift[0].timeStart} -{' '}
-                {item.shift[2].timeEnd}
+                <Text>Opening Time:</Text> {item.shiftTime[0].timeStart} -{' '}
+                {item.shiftTime[2].timeEnd}
               </Text>
             </View>
-            <Text style={styles.resDescription}>{item.description}</Text>
-            <Text style={styles.menuText}>Menu</Text>
-            <View style={styles.menuContainer}>
-              {item.menu.map(e => {
-                return (
-                  <View style={styles.menu} key={e.id}>
-                    <Image style={styles.menuImage} source={{uri: e.image}} />
-                    <Text style={styles.menuItem}>{e.title}</Text>
-                    <Text>${e.price}</Text>
-                  </View>
-                );
-              })}
-            </View>
+            <Text style={styles.resDescription}>{item.restaurantDescribe}</Text>
+            <Text style={styles.name}>Menu</Text>
+            <Text style={styles.timeText}>● Dishes</Text>
+            <ScrollView horizontal={true} style={styles.menuContainer}>
+              {loading || dataMenu === '' ? (
+                <View style={styles.loading}>
+                  <ActivityIndicator size="small" color="black" />
+                </View>
+              ) : (
+                dataMenu
+                  .filter(e => e.dishType === 'Dish')
+                  .map(e => {
+                    return (
+                      <View style={styles.menu} key={e._id}>
+                        <Image
+                          style={styles.menuImage}
+                          source={{
+                            uri:
+                              e.dishImage.length === 0
+                                ? 'https://t3.ftcdn.net/jpg/04/62/93/66/360_F_462936689_BpEEcxfgMuYPfTaIAOC1tCDurmsno7Sp.jpg'
+                                : e.dishImage[0],
+                          }}
+                        />
+                        <Text style={styles.menuItem}>{e.dishName}</Text>
+                        <Text style={styles.menuText}>${e.dishPrice}</Text>
+                        <Text>{e.dishDescribe}</Text>
+                      </View>
+                    );
+                  })
+              )}
+            </ScrollView>
+            <Text style={styles.timeText}>● Drinks</Text>
+            <ScrollView horizontal={true} style={styles.menuContainer}>
+              {loading || dataMenu === '' ? (
+                <View style={styles.loading}>
+                  <ActivityIndicator size="large" color="black" />
+                </View>
+              ) : (
+                dataMenu
+                  .filter(e => e.dishType === 'Drink')
+                  .map(e => {
+                    return (
+                      <View style={styles.menu} key={e._id}>
+                        <Image
+                          style={styles.menuImage}
+                          source={{
+                            uri:
+                              e.dishImage.length === 0
+                                ? 'https://t3.ftcdn.net/jpg/04/62/93/66/360_F_462936689_BpEEcxfgMuYPfTaIAOC1tCDurmsno7Sp.jpg'
+                                : e.dishImage[0],
+                          }}
+                        />
+                        <Text style={styles.menuItem}>{e.dishName}</Text>
+                        <Text style={styles.menuText}>${e.dishPrice}</Text>
+                        <Text>{e.dishDescribe}</Text>
+                      </View>
+                    );
+                  })
+              )}
+            </ScrollView>
           </View>
         </View>
       </ScrollView>
@@ -203,11 +277,12 @@ const styles = StyleSheet.create({
     width: '70%',
   },
   rating: {
-    padding: 5,
+    padding: 7,
     paddingHorizontal: 10,
     backgroundColor: 'yellow',
     flexDirection: 'row',
-    borderRadius: 10,
+    borderTopLeftRadius: 10,
+    borderBottomLeftRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -220,7 +295,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   ratingText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     marginLeft: 5,
     color: 'black',
@@ -257,13 +332,16 @@ const styles = StyleSheet.create({
   menuContainer: {
     marginBottom: 10,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    // flexWrap: 'wrap',
+    // justifyContent: 'space-between',
     marginVertical: 20,
+    borderBottomColor: 'black',
+    borderBottomWidth: 1,
   },
   menu: {
     width: IMG_WIDTH,
     marginBottom: 20,
+    marginRight: 20,
   },
   circle: {
     width: 10,
@@ -277,7 +355,7 @@ const styles = StyleSheet.create({
     color: 'gray',
   },
   menuText: {
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: '700',
     color: 'black',
   },
@@ -302,5 +380,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: IMG_WIDTH + 30,
     borderRadius: 20,
+  },
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
   },
 });
