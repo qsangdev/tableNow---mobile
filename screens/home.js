@@ -67,7 +67,6 @@ const Home = ({navigation}) => {
 
   // State to hold location //
   const [currentLocation, setCurrentLocation] = useState('');
-  // const [location, setLocation] = useState('');
 
   // Function to check permissions and get Location //
   const getLocation = () => {
@@ -91,7 +90,6 @@ const Home = ({navigation}) => {
           });
       }
     });
-    // console.log(location);
   };
 
   useEffect(() => {
@@ -180,23 +178,23 @@ const Home = ({navigation}) => {
     getDATA();
   }, []);
 
-  // const filterRestaurant = () => {
-  //   if (loading === false || DATA !== '') {
-  //     return DATA.filter(e =>
-  //       e.restaurantName
-  //         .toLocaleLowerCase()
-  //         .includes(searchText.toLocaleLowerCase()),
-  //     );
-  //   } else setLoading(true);
-  // };
+  const filterRestaurant = () => {
+    if (loading === false || DATA !== '') {
+      return DATA.filter(e =>
+        e.restaurantName
+          .toLocaleLowerCase()
+          .includes(searchText.toLocaleLowerCase()),
+      );
+    } else setLoading(true);
+  };
 
-  // const sortByRating = () => {
-  //   return DATA.sort((a, b) => b.rating - a.rating);
-  // };
+  const sortByRating = () => {
+    return DATA.sort((a, b) => b.rating - a.rating);
+  };
 
-  // const sortByDiscount = () => {
-  //   return DATA.sort((a, b) => b.discount - a.discount);
-  // };
+  const sortByDiscount = () => {
+    return DATA.sort((a, b) => b.maxDiscount - a.maxDiscount);
+  };
 
   return (
     <>
@@ -336,113 +334,116 @@ const Home = ({navigation}) => {
           <ActivityIndicator size="large" color="black" />
         </View>
       ) : (
-        currentLocation && (
-          <>
-            <View style={styles.search}>
-              <Ionicons
-                style={{marginLeft: 10}}
-                name="search-outline"
-                size={20}
-                color="white"
-              />
-              <TextInput
-                placeholder="Where do you want to eat today?"
-                placeholderTextColor="white"
-                onChangeText={text => setSearchText(text)}
-                style={styles.searchText}
-                value={searchText}
-              />
-              {searchText ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    setSearchText('');
-                    Keyboard.dismiss();
-                  }}>
-                  <Ionicons
-                    style={{marginRight: 10}}
-                    name="close-circle-outline"
-                    size={20}
-                    color="white"
-                  />
-                </TouchableOpacity>
-              ) : null}
-            </View>
-            <Picker
-              style={styles.picker}
-              mode="dropdown"
-              itemStyle={styles.itemPicker}
-              selectedValue={sort}
-              onValueChange={(itemValue, itemIndex) => setSort(itemValue)}>
-              <Picker.Item label="Sort by Discount" value="discount" />
-              <Picker.Item label="Sort by Rating" value="rating" />
-              <Picker.Item label="Sort by Distance" value="distance" />
-            </Picker>
+        <>
+          <View style={styles.search}>
+            <Ionicons
+              style={{marginLeft: 10}}
+              name="search-outline"
+              size={20}
+              color="white"
+            />
+            <TextInput
+              placeholder="Where do you want to eat today?"
+              placeholderTextColor="white"
+              onChangeText={text => setSearchText(text)}
+              style={styles.searchText}
+              value={searchText}
+            />
+            {searchText ? (
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchText('');
+                  Keyboard.dismiss();
+                }}>
+                <Ionicons
+                  style={{marginRight: 10}}
+                  name="close-circle-outline"
+                  size={20}
+                  color="white"
+                />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          <Picker
+            style={styles.picker}
+            mode="dropdown"
+            itemStyle={styles.itemPicker}
+            selectedValue={sort}
+            onValueChange={(itemValue, itemIndex) => setSort(itemValue)}>
+            <Picker.Item label="Sort by Discount" value="discount" />
+            <Picker.Item label="Sort by Rating" value="rating" />
+            <Picker.Item label="Sort by Distance" value="distance" />
+          </Picker>
 
-            {DATA !== '' ? (
-              <FlatList
-                data={
-                  // sort === 'rating'
-                  //   ? sortByRating() && filterRestaurant()
-                  //   : sort === 'discount'
-                  //   ? sortByDiscount() && filterRestaurant()
-                  //   :
-                  DATA
-                }
-                numColumns={2}
-                renderItem={({item, index}) => {
-                  return (
-                    <TouchableOpacity
-                      style={styles.items}
-                      key={index}
-                      onPress={() => {
-                        navigation.navigate('Restaurant', {
-                          item: item,
-                          // location: currentLocation,
-                        });
-                      }}>
-                      <Image
-                        style={styles.itemImage}
-                        source={{
-                          uri:
-                            item.images.length === 0
-                              ? 'https://t3.ftcdn.net/jpg/04/62/93/66/360_F_462936689_BpEEcxfgMuYPfTaIAOC1tCDurmsno7Sp.jpg'
-                              : item.images[0],
-                        }}
-                      />
-                      <Text style={styles.itemDescription}>
-                        {item.restaurantName}{' '}
+          {DATA !== '' ? (
+            <FlatList
+              data={
+                sort === 'rating'
+                  ? sortByRating() && filterRestaurant()
+                  : sort === 'discount'
+                  ? sortByDiscount() && filterRestaurant()
+                  : DATA
+              }
+              numColumns={2}
+              renderItem={({item, index}) => {
+                return (
+                  <TouchableOpacity
+                    style={styles.items}
+                    key={index}
+                    onPress={() => {
+                      navigation.navigate('Restaurant', {
+                        item: item,
+                        location: currentLocation,
+                      });
+                    }}>
+                    <Image
+                      style={styles.itemImage}
+                      source={{
+                        uri:
+                          item.images.length === 0
+                            ? 'https://t3.ftcdn.net/jpg/04/62/93/66/360_F_462936689_BpEEcxfgMuYPfTaIAOC1tCDurmsno7Sp.jpg'
+                            : item.images[0],
+                      }}
+                    />
+                    <Text style={styles.itemDescription}>
+                      {item.restaurantName}{' '}
+                    </Text>
+                    <View style={styles.ratingBox}>
+                      <Ionicons name="star-outline" color="black" size={17} />
+
+                      <Text style={styles.ratingText}>
+                        {item.rating ? `${item.rating}`.slice(0, 3) : null}
                       </Text>
-                      <View style={styles.ratingBox}>
-                        <Ionicons name="star-outline" color="black" size={17} />
-
-                        <Text style={styles.ratingText}>
-                          {item.rating ? item.rating : 0}
+                    </View>
+                    <View style={styles.resInfo}>
+                      {currentLocation && (
+                        <Text style={styles.distant}>
+                          {`${
+                            getDistance(
+                              {
+                                latitude: currentLocation.latitude,
+                                longitude: currentLocation.longitude,
+                              },
+                              {
+                                latitude: item.latitude,
+                                longitude: item.longitude,
+                              },
+                            ) / 1000
+                          }`.slice(0, 4)}{' '}
+                          KM
                         </Text>
-                      </View>
-                      {/* <Text>
-                        {getDistance(
-                          {
-                            latitude: currentLocation.latitude,
-                            longitude: currentLocation.longitude,
-                          },
-                          {
-                            latitude: item.latitude,
-                            longitude: item.longitude,
-                          },
-                        ) / 1000}{' '}
-                        KM
-                      </Text> */}
+                      )}
                       <Text style={styles.itemDiscount}>
-                        Max discount {item.maxDicount}%
+                        Max discount {item.maxDiscount}%
                       </Text>
-                    </TouchableOpacity>
-                  );
-                }}></FlatList>
-            ) : (
-              <Text style={styles.modalText}>Restaurant not found</Text>
-            )}
-          </>
-        )
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}></FlatList>
+          ) : (
+            <Text style={styles.modalText}>Restaurant not found</Text>
+          )}
+        </>
       )}
     </>
   );
@@ -469,6 +470,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginEnd: 8,
     color: 'white',
+    fontWeight: '800',
   },
   loading: {
     flex: 1,
@@ -491,7 +493,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   name: {
-    fontSize: 17,
+    fontSize: 25,
     fontWeight: '800',
     color: 'black',
   },
@@ -533,6 +535,7 @@ const styles = StyleSheet.create({
     width: ITEM_WIDTH,
     marginStart: 20,
     marginVertical: 20,
+    height: 295,
   },
   itemImage: {
     width: '100%',
@@ -556,7 +559,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'yellow',
     padding: 2,
-    borderRadius: 5,
+    borderTopLeftRadius: 5,
+    borderBottomLeftRadius: 5,
     position: 'absolute',
     top: 0,
     right: 0,
@@ -573,6 +577,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#006400',
     marginTop: 5,
+    fontWeight: '700',
   },
   backgroundModal: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -614,8 +619,6 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     borderRadius: 20,
     backgroundColor: 'white',
-    // borderWidth: 1,
-    // borderColor: 'maroon',
   },
   itemText: {
     fontSize: 14,
@@ -628,4 +631,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   picker: {},
+  distant: {
+    fontWeight: '800',
+  },
+  resInfo: {
+    position: 'absolute',
+    bottom: 0,
+  },
 });
