@@ -14,6 +14,7 @@ import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {getDistance} from 'geolib';
 import axios from 'axios';
+import moment from 'moment';
 
 const {height} = Dimensions.get('window');
 const {width} = Dimensions.get('window');
@@ -27,6 +28,7 @@ const Restaurant = ({route, navigation}) => {
 
   const [loading, setLoading] = useState(false);
   const [dataMenu, setDataMenu] = useState([]);
+  const [dataRating, setDataRating] = useState([]);
 
   onchange = nativeEvent => {
     if (nativeEvent) {
@@ -52,6 +54,21 @@ const Restaurant = ({route, navigation}) => {
 
   useEffect(() => {
     getDataMenu();
+  }, []);
+
+  const getDataRating = async () => {
+    setLoading(true);
+    await axios
+      .get(`http://10.0.2.2:3001/api/rating/get-details/${item.restaurantID}`)
+      .then(res => {
+        setLoading(false);
+        setDataRating(res.data.data);
+      })
+      .catch(err => console.log(err));
+  };
+
+  useEffect(() => {
+    getDataRating();
   }, []);
 
   return (
@@ -103,25 +120,27 @@ const Restaurant = ({route, navigation}) => {
                 <Ionicons name="star-outline" color="black" size={20} />
 
                 <Text style={styles.ratingText}>
-                  {item.rating ? item.rating : 0}
+                  {item.rating ? `${item.rating}`.slice(0, 3) : null}
                 </Text>
               </TouchableOpacity>
             </View>
             <View style={styles.location}>
-              <Text>{item.restaurantAddress}</Text>
-              {/* <Text>
-                {getDistance(
-                  {
-                    latitude: location.latitude,
-                    longitude: location.longitude,
-                  },
-                  {
-                    latitude: item.latitude,
-                    longitude: item.longitude,
-                  },
-                ) / 1000}{' '}
+              <Text style={styles.addressText}>{item.restaurantAddress}</Text>
+              <Text style={styles.addressText}>
+                {`${
+                  getDistance(
+                    {
+                      latitude: location.latitude,
+                      longitude: location.longitude,
+                    },
+                    {
+                      latitude: item.latitude,
+                      longitude: item.longitude,
+                    },
+                  ) / 1000
+                }`.slice(0, 4)}{' '}
                 KM
-              </Text> */}
+              </Text>
             </View>
             <View style={styles.time}>
               <Ionicons name="alarm-outline" color="black" size={22} />
@@ -133,10 +152,13 @@ const Restaurant = ({route, navigation}) => {
             <Text style={styles.resDescription}>{item.restaurantDescribe}</Text>
             <Text style={styles.name}>Menu</Text>
             <Text style={styles.timeText}>● Dishes</Text>
-            <ScrollView horizontal={true} style={styles.menuContainer}>
+            <ScrollView
+              persistentScrollbar={true}
+              horizontal={true}
+              style={styles.menuContainer}>
               {loading || dataMenu === '' ? (
                 <View style={styles.loading}>
-                  <ActivityIndicator size="small" color="black" />
+                  <ActivityIndicator size="large" color="black" />
                 </View>
               ) : (
                 dataMenu
@@ -144,6 +166,9 @@ const Restaurant = ({route, navigation}) => {
                   .map(e => {
                     return (
                       <View style={styles.menu} key={e._id}>
+                        <Text style={styles.dishDiscount}>
+                          -{e.dishDiscount ? e.dishDiscount : 0}%
+                        </Text>
                         <Image
                           style={styles.menuImage}
                           source={{
@@ -162,7 +187,10 @@ const Restaurant = ({route, navigation}) => {
               )}
             </ScrollView>
             <Text style={styles.timeText}>● Drinks</Text>
-            <ScrollView horizontal={true} style={styles.menuContainer}>
+            <ScrollView
+              persistentScrollbar={true}
+              horizontal={true}
+              style={styles.menuContainer}>
               {loading || dataMenu === '' ? (
                 <View style={styles.loading}>
                   <ActivityIndicator size="large" color="black" />
@@ -173,6 +201,9 @@ const Restaurant = ({route, navigation}) => {
                   .map(e => {
                     return (
                       <View style={styles.menu} key={e._id}>
+                        <Text style={styles.dishDiscount}>
+                          -{e.dishDiscount ? e.dishDiscount : 0}%
+                        </Text>
                         <Image
                           style={styles.menuImage}
                           source={{
@@ -190,6 +221,63 @@ const Restaurant = ({route, navigation}) => {
                   })
               )}
             </ScrollView>
+            <View>
+              <Text style={styles.timeText}>● Rating</Text>
+              {loading || dataRating === '' ? (
+                <View style={styles.loading}>
+                  <ActivityIndicator size="large" color="black" />
+                </View>
+              ) : (
+                dataRating
+                  .sort((a, b) => moment(b.createdAt) - moment(a.createdAt))
+                  .map(e => {
+                    return (
+                      <View
+                        key={e._id}
+                        style={{
+                          marginTop: 10,
+                          borderWidth: 1,
+                          borderRadius: 10,
+                          padding: 10,
+                        }}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                          }}>
+                          <Text style={styles.addressText}>
+                            {e.ratingName}:
+                          </Text>
+                          <View style={{flexDirection: 'row'}}>
+                            {[...Array(e.ratingStar)].map((e, i) => {
+                              return (
+                                <Ionicons
+                                  key={i}
+                                  name="star"
+                                  color="gold"
+                                  size={20}
+                                />
+                              );
+                            })}
+                          </View>
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                          }}>
+                          <Text style={styles.addressText}>
+                            "{e.ratingComment}"
+                          </Text>
+                          <Text>
+                            {moment(e.createdAt).format('HH:mm DD/MM/YYYY')}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  })
+              )}
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -332,8 +420,6 @@ const styles = StyleSheet.create({
   menuContainer: {
     marginBottom: 10,
     flexDirection: 'row',
-    // flexWrap: 'wrap',
-    // justifyContent: 'space-between',
     marginVertical: 20,
     borderBottomColor: 'black',
     borderBottomWidth: 1,
@@ -362,6 +448,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     paddingHorizontal: 20,
     paddingVertical: 5,
+    backgroundColor: 'white',
   },
   buttonBooking: {
     width: '100%',
@@ -384,5 +471,19 @@ const styles = StyleSheet.create({
   loading: {
     flex: 1,
     justifyContent: 'center',
+  },
+  addressText: {
+    fontWeight: '800',
+  },
+  dishDiscount: {
+    position: 'absolute',
+    zIndex: 1,
+    backgroundColor: '#006400',
+    color: 'white',
+    right: 0,
+    paddingHorizontal: 5,
+    fontSize: 15,
+    borderTopLeftRadius: 5,
+    borderBottomLeftRadius: 5,
   },
 });

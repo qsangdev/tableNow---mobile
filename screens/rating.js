@@ -19,6 +19,7 @@ const Rating = ({route, navigation}) => {
   const maxRating = [1, 2, 3, 4, 5];
   const [comment, setComment] = useState('');
   const [average, setAverage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleRating = async () => {
     await axios
@@ -29,6 +30,7 @@ const Rating = ({route, navigation}) => {
         ratingComment: comment,
       })
       .then(async res => {
+        setLoading(true);
         await axios
           .get(
             `http://10.0.2.2:3001/api/rating/get-details/${item.restaurantID}`,
@@ -42,6 +44,7 @@ const Rating = ({route, navigation}) => {
                   res.data.data.length,
               },
             );
+            setLoading(false);
           });
         if (res.data.status === 'OK') {
           alert(res.data.message);
@@ -64,9 +67,9 @@ const Rating = ({route, navigation}) => {
               onPress={() => setDefaultRating(item)}>
               <Text style={styles.starStarStyle}>
                 {item <= defaultRating ? (
-                  <Ionicons name="star" size={33} color="yellow" />
+                  <Ionicons name="star" size={33} color="gold" />
                 ) : (
-                  <Ionicons name="star-outline" size={30} color="yellow" />
+                  <Ionicons name="star-outline" size={30} color="gold" />
                 )}
               </Text>
             </TouchableOpacity>
@@ -135,6 +138,7 @@ const Rating = ({route, navigation}) => {
       </View>
       <TouchableOpacity onPress={handleRating} style={styles.buttonRate}>
         <Text style={styles.textRate}>Rate</Text>
+        {loading ? <ActivityIndicator size="large" color="black" /> : null}
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -166,7 +170,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginVertical: 10,
     borderRadius: 10,
-    backgroundColor: 'silver',
     alignItems: 'center',
   },
   starStarStyle: {
