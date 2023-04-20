@@ -21,8 +21,8 @@ import GetLocation from 'react-native-get-location';
 import {getDistance} from 'geolib';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Picker} from '@react-native-picker/picker';
-import {sortByDistance} from 'sort-by-distance';
 import axios from 'axios';
+import moment from 'moment';
 
 const {width} = Dimensions.get('window');
 const {height} = Dimensions.get('window');
@@ -30,11 +30,13 @@ const ITEM_WIDTH = width / 2 - 30;
 
 const Home = ({navigation}) => {
   const [DATA, setDATA] = useState('');
+  const [dataOrder, setDataOrder] = useState('');
+
+  const [userName, setUserName] = useState('');
+  const [userPhone, setUserPhone] = useState('');
 
   const [loading, setLoading] = useState(false);
-  const [booked, setBooked] = useState(0);
   const [openBooked, setOpenBooked] = useState(false);
-  const [tables, setTables] = useState([]);
   const [searchText, setSearchText] = useState('');
 
   const [sort, setSort] = useState('rating');
@@ -100,26 +102,54 @@ const Home = ({navigation}) => {
 
   useEffect(() => {
     const refesh = navigation.addListener('focus', () => {
-      allTables();
+      getUser();
       getDATA();
+      getDataOrder();
     });
     return refesh;
-  }, []);
+  }, [userName, userPhone]);
 
-  const allTables = async () => {
+  const getUser = async () => {
     try {
-      const data = await AsyncStorage.getItem('tables');
-      const allBooked = JSON.parse(data);
-      setTables(allBooked);
-      setBooked(allBooked.length);
+      const data = await AsyncStorage.getItem('user');
+      if (!data || data.length === 0) {
+        return;
+      } else {
+        const user = JSON.parse(data);
+        setUserName(user.userName);
+        setUserPhone(user.userPhone);
+      }
     } catch (e) {
       console.log(e);
     }
   };
 
-  const handleDeleteData = () => {
+  // const handleDeleteData = () => {
+  //   try {
+  //     Alert.alert('Are you sure?', 'Delete all reservation?', [
+  //       {
+  //         text: 'Cancel',
+  //         onPress: () => console.log('Cancel Pressed'),
+  //         style: 'cancel',
+  //       },
+  //       {
+  //         text: 'OK',
+  //         onPress: async () => {
+  //           await AsyncStorage.removeItem('tables');
+  //           allTables();
+  //           setBooked(0);
+  //           console.log('All data deleted.');
+  //         },
+  //       },
+  //     ]);
+  //   } catch (e) {
+  //     console.log(e);
+  //   }
+  // };
+
+  const handleCancelOrder = (id, resID) => {
     try {
-      Alert.alert('Are you sure?', 'Delete all booked?', [
+      Alert.alert('Are you sure?', 'Delete this reservation?', [
         {
           text: 'Cancel',
           onPress: () => console.log('Cancel Pressed'),
@@ -128,33 +158,35 @@ const Home = ({navigation}) => {
         {
           text: 'OK',
           onPress: async () => {
-            await AsyncStorage.removeItem('tables');
-            allTables();
-            setBooked(0);
-            console.log('All data deleted.');
-          },
-        },
-      ]);
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  const handleDeleteItem = id => {
-    try {
-      Alert.alert('Are you sure?', 'Delete this booked?', [
-        {
-          text: 'Cancel',
-          onPress: () => console.log('Cancel Pressed'),
-          style: 'cancel',
-        },
-        {
-          text: 'OK',
-          onPress: async () => {
-            const removeItem = [...tables].filter(item => item.id !== id);
-            await AsyncStorage.setItem('tables', JSON.stringify(removeItem));
-            setTables(removeItem);
-            allTables();
+            await axios
+              .put(`http://10.0.2.2:3001/api/order/update/${id}`, {
+                cancelled: true,
+              })
+              .then(async res => {
+                if (res.data.status === 'ERR') {
+                  return alert(res.data.message);
+                } else {
+                  await axios
+                    .post(
+                      `http://10.0.2.2:3001/api/table/update-status/${
+                        DATA?.filter(e => e.restaurantID === resID)[0]
+                          .restaurantID
+                      }`,
+                      {
+                        tables: [
+                          {
+                            _id: id,
+                            status: 'available',
+                          },
+                        ],
+                      },
+                    )
+                    .then(() => {
+                      getUser();
+                      getDataOrder();
+                    });
+                }
+              });
           },
         },
       ]);
@@ -177,6 +209,77 @@ const Home = ({navigation}) => {
   useEffect(() => {
     getDATA();
   }, []);
+
+  const getDataOrder = async () => {
+    setLoading(true);
+    await axios
+      .get('http://10.0.2.2:3001/api/order/getAll')
+      .then(res => {
+        if ((userName, userPhone)) {
+          setLoading(false);
+          setDataOrder(
+            res.data.data.filter(
+              e =>
+                (e.guestName === userName || e.guestPhone === userPhone) &&
+                e.completed === false &&
+                e.cancelled === false,
+            ),
+          );
+        }
+      })
+      .catch(err => console.log(err));
+  };
+
+  useEffect(() => {
+    getDataOrder();
+  }, [userName, userPhone]);
+
+  useEffect(() => {
+    checkOverTime();
+  }, [dataOrder]);
+
+  const checkOverTime = () => {
+    dataOrder !== '' &&
+      dataOrder.map(async e => {
+        if (
+          moment().isAfter(
+            moment(
+              `${e.dateOrder.slice(0, 5)} ${e.timeOrder.slice(0, 6)}`,
+              'DD/MM HH:mm',
+            )
+              .add(30, 'minutes')
+              .toDate(),
+          ) === true
+        ) {
+          await axios
+            .put(`http://10.0.2.2:3001/api/order/update/${e._id}`, {
+              cancelled: true,
+            })
+            .then(async res => {
+              if (res.data.status === 'ERR') {
+                return alert(res.data.message);
+              } else {
+                await axios
+                  .post(
+                    `http://10.0.2.2:3001/api/table/update-status/${e.restaurantID}`,
+                    {
+                      tables: [
+                        {
+                          _id: e._id,
+                          status: 'available',
+                        },
+                      ],
+                    },
+                  )
+                  .then(() => {
+                    getUser();
+                    getDataOrder();
+                  });
+              }
+            });
+        }
+      });
+  };
 
   const filterRestaurant = () => {
     if (loading === false || DATA !== '') {
@@ -208,13 +311,15 @@ const Home = ({navigation}) => {
             <View style={styles.backgroundModal}>
               <View style={styles.modalContainer}>
                 <SafeAreaView style={styles.modalHeader}>
-                  <TouchableOpacity onPress={tables && handleDeleteData}>
+                  <TouchableOpacity
+                  //  onPress={tables && handleDeleteData}
+                  >
                     <Ionicons
                       size={30}
                       color="maroon"
                       name="trash-sharp"></Ionicons>
                   </TouchableOpacity>
-                  <Text style={styles.modalText}>Booked List</Text>
+                  <Text style={styles.modalText}>Reservation List</Text>
                   <TouchableOpacity onPress={() => setOpenBooked(!openBooked)}>
                     <Ionicons
                       size={30}
@@ -225,94 +330,103 @@ const Home = ({navigation}) => {
                 <ScrollView
                   style={styles.modalBox}
                   showsVerticalScrollIndicator={false}>
-                  {!tables || tables.length === 0 ? (
+                  {!dataOrder || dataOrder.length === 0 || DATA.length === 0 ? (
                     <Text style={styles.modalText}>Empty</Text>
                   ) : (
-                    tables.map(e => {
+                    dataOrder.map(e => {
                       return (
-                        <View style={styles.bookedItem} key={e.id}>
-                          <Text style={styles.itemText}>
+                        <View style={styles.bookedItem} key={e._id}>
+                          <View style={styles.itemText}>
                             <Ionicons
+                              style={{marginVertical: -4}}
                               color="maroon"
-                              size={20}
+                              size={22}
                               name="time-outline"></Ionicons>
-                            {'  '}
-                            {e.time}
-                          </Text>
-
-                          <Text style={styles.itemText}>
                             <Ionicons
+                              style={{marginVertical: 2}}
                               color="maroon"
-                              size={20}
+                              size={22}
                               name="restaurant-outline"></Ionicons>
-                            {'  '}
-                            {e.restaurant}
-                          </Text>
-                          <Text style={styles.itemText}>
                             <Ionicons
+                              style={{marginTop: 2, marginBottom: 1}}
                               color="maroon"
-                              size={20}
+                              size={25}
                               name="location-outline"></Ionicons>
-                            {'  '}
-                            {e.location}
-                          </Text>
-                          <Text style={styles.itemText}>
                             <Ionicons
+                              style={{marginVertical: 5}}
                               color="maroon"
-                              size={20}
+                              size={22}
                               name="calendar-outline"></Ionicons>
-                            {'  '}
-                            {e.date}
-                          </Text>
-                          <Text style={styles.itemText}>
                             <Ionicons
+                              style={{marginVertical: -1}}
                               color="maroon"
-                              size={20}
+                              size={22}
                               name="grid-outline"></Ionicons>
-                            {'  '}
-                            {e.tableId}
-                          </Text>
-                          <Text style={styles.itemText}>
                             <Ionicons
+                              style={{marginVertical: 1}}
                               color="maroon"
-                              size={20}
+                              size={22}
                               name="people-outline"></Ionicons>
-                            {'  '}
-                            {e.people}
-                          </Text>
-                          <Text style={styles.itemText}>
                             <Ionicons
+                              style={{marginVertical: -2}}
                               color="maroon"
-                              size={20}
+                              size={22}
                               name="person-circle-outline"></Ionicons>
-                            {'  '}
-                            {e.name}
-                          </Text>
-                          <View style={styles.itemsHeader}>
+                            <Ionicons
+                              style={{marginVertical: 2}}
+                              color="maroon"
+                              size={22}
+                              name="call-outline"></Ionicons>
+                          </View>
+
+                          <View style={{marginLeft: 10, marginRight: 20}}>
+                            <Text style={styles.itemText}>{e.timeOrder}</Text>
                             <Text style={styles.itemText}>
-                              <Ionicons
-                                color="maroon"
-                                size={20}
-                                name="call-outline"></Ionicons>
-                              {'  '}
-                              {e.number}
+                              {DATA.filter(
+                                i => i.restaurantID === e.restaurantID,
+                              ).map(i => {
+                                return i.restaurantName;
+                              })}
                             </Text>
-                            <TouchableOpacity
-                              onPress={() => handleDeleteItem(e.id)}>
-                              <Ionicons
-                                color="maroon"
-                                size={25}
-                                name="trash-outline"></Ionicons>
-                            </TouchableOpacity>
+                            <Text style={styles.itemText}>
+                              {DATA.filter(
+                                i => i.restaurantID === e.restaurantID,
+                              ).map(i => {
+                                return i.restaurantAddress;
+                              })}
+                            </Text>
+                            <Text style={styles.itemText}>{e.dateOrder}</Text>
+                            <Text style={styles.itemText}>{e.tableName}</Text>
+                            <Text style={styles.itemText}>
+                              {' '}
+                              {e.numberOfPeople}
+                            </Text>
+                            <Text style={styles.itemText}>{e.guestName}</Text>
+                            <View style={styles.itemsHeader}>
+                              <Text style={styles.itemText}>
+                                {e.guestPhone}
+                              </Text>
+                              <TouchableOpacity
+                                onPress={() =>
+                                  handleCancelOrder(e._id, e.restaurantID)
+                                }>
+                                <Ionicons
+                                  color="maroon"
+                                  size={25}
+                                  name="trash-outline"></Ionicons>
+                              </TouchableOpacity>
+                            </View>
                           </View>
                         </View>
                       );
                     })
                   )}
-                  {!tables || tables.length === 0 ? null : (
-                    <Text style={{textAlign: 'center'}}>
+                  {!dataOrder ||
+                  dataOrder.length === 0 ||
+                  DATA.length === 0 ? null : (
+                    <Text style={{textAlign: 'center', fontWeight: '600'}}>
                       * Warning: Your booking will be automatically canceled if
-                      you check in 30 minutes late
+                      you check in 30 minutes late!
                     </Text>
                   )}
                 </ScrollView>
@@ -322,7 +436,11 @@ const Home = ({navigation}) => {
           <View style={styles.headerButton}>
             <TouchableOpacity onPress={() => setOpenBooked(!openBooked)}>
               <View style={styles.bookedNumber}>
-                <Text style={styles.booked}>{booked}</Text>
+                {!dataOrder || dataOrder.length === 0 || DATA.length === 0 ? (
+                  <Text style={styles.booked}>0</Text>
+                ) : (
+                  <Text style={styles.booked}>{dataOrder.length}</Text>
+                )}
               </View>
               <Ionicons name="restaurant-outline" size={35} color="black" />
             </TouchableOpacity>
@@ -619,12 +737,14 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     borderRadius: 20,
     backgroundColor: 'white',
+    flexDirection: 'row',
   },
   itemText: {
     fontSize: 14,
     color: 'black',
     fontWeight: '700',
     textAlignVertical: 'center',
+    marginVertical: 2,
   },
   itemsHeader: {
     flexDirection: 'row',

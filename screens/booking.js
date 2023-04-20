@@ -43,8 +43,10 @@ const Booking = ({route, navigation}) => {
   const [dataTime, setDataTime] = useState([]);
 
   const [chooseId, setChooseId] = useState(0);
-  const handleChoose = id => {
-    setChooseId(id);
+  const [tableId, setTableId] = useState(0);
+  const handleChoose = (name, id) => {
+    setChooseId(name);
+    setTableId(id);
   };
 
   const today = new Date();
@@ -147,39 +149,65 @@ const Booking = ({route, navigation}) => {
     checkRealTime();
   }, [clicked, checkTime, date, dataTime]);
 
-  const sendRequest = async () => {
+  const handleOrder = async () => {
     try {
-      const data = JSON.parse(await AsyncStorage.getItem('tables')) || [];
-      const newOrder = {
-        id: uuidv4(),
-        name: name,
-        number: number,
-        date: moment(date).format('DD/MM/YYYY'),
-        time: dataTime[clicked - 1].timeStart,
-        restaurant: item.name,
-        location: item.location,
-        people: people,
-        tableId: chooseId,
-      };
-      data.push(newOrder);
-      await AsyncStorage.setItem('tables', JSON.stringify(data));
-      alert('Booking Success');
-      Keyboard.dismiss();
-      navigation.navigate('Home');
-    } catch (e) {
-      console.log(e);
+      setLoading(true);
+      await axios
+        .post('http://10.0.2.2:3001/api/order/create', {
+          restaurantID: item.restaurantID,
+          guestName: name,
+          guestPhone: number,
+          dateOrder: moment(date).format('DD/MM/YYYY'),
+          numberOfPeople: people,
+          timeOrder: `${dataTime[clicked - 1].timeStart} - ${
+            dataTime[clicked - 1].timeEnd
+          }`,
+          tableName: chooseId,
+        })
+        .then(async res => {
+          if (res.data.status === 'ERR') {
+            return alert(res.data.message);
+          } else {
+            await axios
+              .post(
+                `http://10.0.2.2:3001/api/table/update-status/${item.restaurantID}`,
+                {
+                  tables: [
+                    {
+                      _id: tableId,
+                      status: 'unavailable',
+                    },
+                  ],
+                },
+              )
+              .then(async res => {
+                await AsyncStorage.setItem(
+                  'user',
+                  JSON.stringify({
+                    userName: name,
+                    userPhone: number,
+                  }),
+                );
+                setLoading(false);
+                alert(res.data.message);
+                navigation.navigate('Home');
+              });
+          }
+        });
+    } catch (err) {
+      console.log(err);
     }
   };
 
   const autoFillLastInfo = async () => {
     try {
-      const data = await AsyncStorage.getItem('tables');
+      const data = await AsyncStorage.getItem('user');
       if (!data || data.length === 0) {
-        return console.log('empty');
+        return;
       } else {
-        const allBooked = JSON.parse(data);
-        setName(allBooked[allBooked.length - 1].name);
-        setNumber(allBooked[allBooked.length - 1].number);
+        const user = JSON.parse(data);
+        setName(user.userName);
+        setNumber(user.userPhone);
       }
     } catch (e) {
       console.log(e);
@@ -192,7 +220,7 @@ const Booking = ({route, navigation}) => {
 
   return (
     <>
-      {loading || dataTables.length === 0 || dataTime.length === 0 ? (
+      {dataTables.length === 0 || dataTime.length === 0 ? (
         <View style={styles.loading}>
           <ActivityIndicator size="large" color="black" />
         </View>
@@ -264,7 +292,7 @@ const Booking = ({route, navigation}) => {
                     open={open}
                     date={date}
                     minimumDate={new Date(today)}
-                    maximumDate={new Date(today.setDate(today.getDate() + 3))}
+                    maximumDate={new Date(today.setDate(today.getDate() + 7))}
                     onConfirm={date => {
                       setOpen(false);
                       setDate(date);
@@ -355,15 +383,12 @@ const Booking = ({route, navigation}) => {
                         .map(e => {
                           return (
                             <TouchableOpacity
-                              onPress={() => handleChoose(e.name)}
+                              onPress={() => handleChoose(e.name, e._id)}
                               style={styles.table}
                               key={e._id}>
                               {e.status === 'unavailable' ? (
                                 <>
-                                  <CheckBox
-                                    disabled={true}
-                                    value={true}
-                                  />
+                                  <CheckBox disabled={true} value={true} />
                                   <Text style={styles.tableName}>{e.name}</Text>
                                 </>
                               ) : (
@@ -371,7 +396,7 @@ const Booking = ({route, navigation}) => {
                                   <CheckBox
                                     disabled={false}
                                     value={chooseId === e.name}
-                                    onChange={() => handleChoose(e.name)}
+                                    onChange={() => handleChoose(e.name, e._id)}
                                   />
                                   <Text style={styles.tableNameAvai}>
                                     {e.name}
@@ -474,8 +499,17 @@ const Booking = ({route, navigation}) => {
                     <Text style={styles.infoText}>{number}</Text>
                   </View>
                 </View>
-                <TouchableOpacity onPress={sendRequest} style={styles.button}>
-                  <Text style={styles.textStyle}>Start Booking</Text>
+                <TouchableOpacity onPress={handleOrder} style={styles.button}>
+                  <View style={{flexDirection: 'row'}}>
+                    <Text style={styles.textStyle}>Start Booking</Text>
+                    {loading ? (
+                      <ActivityIndicator
+                        size="small"
+                        color="white"
+                        style={{marginLeft: 10}}
+                      />
+                    ) : null}
+                  </View>
                 </TouchableOpacity>
               </View>
             </View>

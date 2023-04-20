@@ -7,6 +7,7 @@ import {
   Image,
   TextInput,
   Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -36,15 +37,14 @@ const Rating = ({route, navigation}) => {
             `http://10.0.2.2:3001/api/rating/get-details/${item.restaurantID}`,
           )
           .then(async res => {
-            await axios.put(
-              `http://10.0.2.2:3001/api/profile/update/${item._id}`,
-              {
+            await axios
+              .put(`http://10.0.2.2:3001/api/profile/update/${item._id}`, {
                 rating:
                   res.data.data.reduce((s, a) => s + a.ratingStar, 0) /
                   res.data.data.length,
-              },
-            );
-            setLoading(false);
+              })
+              .then(() => setLoading(false))
+              .catch(err => console.log(err));
           });
         if (res.data.status === 'OK') {
           alert(res.data.message);
@@ -137,8 +137,16 @@ const Rating = ({route, navigation}) => {
         ) : null}
       </View>
       <TouchableOpacity onPress={handleRating} style={styles.buttonRate}>
-        <Text style={styles.textRate}>Rate</Text>
-        {loading ? <ActivityIndicator size="large" color="black" /> : null}
+        <View style={{flexDirection: 'row'}}>
+          <Text style={styles.textRate}>Rate</Text>
+          {loading ? (
+            <ActivityIndicator
+              size="small"
+              color="white"
+              style={{marginLeft: 10}}
+            />
+          ) : null}
+        </View>
       </TouchableOpacity>
     </SafeAreaView>
   );
