@@ -1,97 +1,199 @@
+import {Picker} from '@react-native-picker/picker';
+import axios from 'axios';
 import React, {useEffect, useState} from 'react';
-import {View, Text, FlatList, StyleSheet, TouchableOpacity} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import DATA from '../hardData/DATA';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Invoice = ({navigation, route}) => {
-  const tableName = route.params.tableName;
-  const onGoBack = route.params.onGoBack;
-  const [invoiceData, setInvoiceData] = useState([]);
-  console.log(tableName);
-  useEffect(() => {
-    const getInvoiceData = async () => {
-      let keys = await AsyncStorage.getAllKeys();
-      let values = await AsyncStorage.multiGet(keys);
-      let invoiceItems = [];
-      let total = 0;
-      values.forEach(value => {
-        let [key, numValue] = value;
-        let [table, item] = key.split('_');
-        if (table === tableName && numValue > 0) {
-          let menuItem = DATA[0].menu.find(e => e.id == item);
-          console.log(menuItem, item);
-          let subtotal = menuItem.price * numValue;
-          total += subtotal; // add the subtotal to the total
-          invoiceItems.push({
-            id: item,
-            title: menuItem.title,
-            price: menuItem.price,
-            quantity: numValue,
-            subtotal: subtotal,
-          });
-        }
-      });
-      setInvoiceData([...invoiceItems, {id: 'total', total: total}]); // set the invoice data with the invoice items and the total amount
-    };
-    getInvoiceData();
-  }, [tableName]); // run the effect when the table name changes
+  const [loading, setLoading] = useState(false);
+  const [dataOrderMenu, setDataOrderMenu] = useState([]);
+  const [method, setMethod] = useState('cash');
 
-  const renderItem = ({item}) => {
-    if (item.id === 'total') {
-      // if the item is the total amount
-      console.log(invoiceData);
-      return <Text style={styles.totalText}>Total: ${item.total}</Text>;
-    } else {
-      return (
-        <View style={styles.invoiceItem}>
-          <Text style={styles.invoiceTitle}>{item.title}</Text>
-          <Text style={styles.invoicePrice}>${item.price}</Text>
-          <Text style={styles.invoiceQuantity}>x{item.quantity}</Text>
-          <Text style={styles.invoiceSubtotal}>${item.subtotal}</Text>
-        </View>
-      );
-    }
+  const resID = route.params.resID;
+  const staffID = route.params.staffID;
+  const orderID = route.params.orderID;
+  const orderMenuID = route.params.orderMenuID;
+  const tableName = route.params.tableName;
+  const tableID = route.params.tableID;
+  const dataMenu = route.params.dataMenu;
+
+  const getDataOrderMenu = async () => {
+    setLoading(true);
+    await axios
+      .get(`http://10.0.2.2:3001/api/order-menu/get-details/${orderID}`)
+      .then(res => {
+        if (res.data.status === 'ERR') {
+          return alert(res.data.message);
+        } else {
+          setLoading(false);
+          const total = res.data.data[0].ordered.reduce((acc, curr) => {
+            const index = acc.findIndex(item => item.dishID === curr.dishID);
+            if (index !== -1) {
+              acc[index].quantity += curr.quantity;
+            } else {
+              acc.push(curr);
+            }
+            return acc;
+          }, []);
+
+          const newBill = total.map(e => {
+            return {
+              ...e,
+              dishName: dataMenu.filter(i => i._id === e.dishID)[0].dishName,
+              dishPrice: dataMenu.filter(i => i._id === e.dishID)[0].dishPrice,
+              dishDiscount: dataMenu.filter(i => i._id === e.dishID)[0]
+                .dishDiscount,
+            };
+          });
+
+          const finalBill = newBill.map(e => {
+            return {
+              ...e,
+              total:
+                (e.dishPrice - (e.dishDiscount * 100) / e.dishPrice) *
+                e.quantity,
+            };
+          });
+          setDataOrderMenu(finalBill);
+        }
+      })
+      .catch(err => console.log(err));
+  };
+
+  useEffect(() => {
+    getDataOrderMenu();
+  }, []);
+
+  const handlePay = async () => {
+    // setLoading(true);
+    await axios
+      .post('http://10.0.2.2:3001/api/bill/create', {
+        tableID: tableID,
+        staffID: staffID,
+        restaurantID: resID,
+        orderID: orderID,
+        orderList: dataOrderMenu,
+        paymentMethod: method,
+        totalPay: dataOrderMenu.reduce((acc, obj) => {
+          return acc + obj.total;
+        }, 0),
+      })
+      .then(async () => {
+        await axios.delete(
+          `http://10.0.2.2:3001/api/order-menu/delete/${orderMenuID}`,
+        );
+        await axios.put(`http://10.0.2.2:3001/api/order/update/${orderID}`, {
+          completed: true,
+        });
+        await axios
+          .post(`http://10.0.2.2:3001/api/table/update-status/${resID}`, {
+            tables: [
+              {
+                _id: tableID,
+                status: 'available',
+              },
+            ],
+          })
+          .then(() => {
+            setLoading(false);
+            navigation.navigate('Tables');
+          });
+      })
+      .catch(err => console.log(err));
   };
 
   return (
-    <View style={styles.invoiceContainer}>
-      <View style={styles.invoiceHeader}>
-        <TouchableOpacity
-          onPress={() => {
-            {
-              navigation.navigate('Tables');
-              onGoBack();
-            }
-          }}>
-          <Ionicons
-            size={30}
-            color="maroon"
-            name="arrow-back-circle-outline"></Ionicons>
-        </TouchableOpacity>
-        <Text style={styles.invoiceTitle}>Table {tableName}</Text>
-        <TouchableOpacity
-          onPress={() => {
-            {
-            }
-          }}>
-          <Ionicons
-            size={30}
-            color="maroon"
-            name="checkmark-done-circle-outline"></Ionicons>
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        data={invoiceData}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-        style={styles.invoiceList}
-      />
-      <View style={styles.invoiceFooter}>
-        <QRCode value={Math.random().toString()} size={100} />
-      </View>
-    </View>
+    <>
+      {loading ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color="black" />
+        </View>
+      ) : (
+        <>
+          <View style={styles.backgroundModal}>
+            <View style={styles.invoiceContainer}>
+              <View style={styles.invoiceHeader}>
+                <TouchableOpacity onPress={() => navigation.navigate('Tables')}>
+                  <Ionicons
+                    size={35}
+                    color="maroon"
+                    name="arrow-back-circle-outline"></Ionicons>
+                </TouchableOpacity>
+                <Text style={styles.invoiceTitle}>{tableName}</Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    Alert.alert(
+                      'Payment Comfirm',
+                      'This action cannot be undone',
+                      [
+                        {
+                          text: 'Cancel',
+                          onPress: () => console.log('Cancel Pressed'),
+                          style: 'cancel',
+                        },
+                        {text: 'OK', onPress: () => handlePay()},
+                      ],
+                    )
+                  }>
+                  <Ionicons
+                    size={35}
+                    color="maroon"
+                    name="checkmark-done-circle-outline"></Ionicons>
+                </TouchableOpacity>
+              </View>
+              <FlatList
+                data={dataOrderMenu}
+                renderItem={({item}) => {
+                  return (
+                    <View style={styles.invoiceItem}>
+                      <Text style={styles.invoiceTitle}>{item.dishName}</Text>
+                      <Text style={styles.invoicePrice}>${item.dishPrice}</Text>
+                      <Text style={styles.invoicePrice}>
+                        -{item.dishDiscount}%
+                      </Text>
+                      <Text style={styles.invoiceQuantity}>
+                        x{item.quantity}
+                      </Text>
+                      <Text style={styles.totalText}>${item.total}</Text>
+                    </View>
+                  );
+                }}
+                keyExtractor={item => item._id}
+                style={styles.invoiceList}
+              />
+
+              <Picker
+                mode="dropdown"
+                selectedValue={method}
+                onValueChange={itemValue => setMethod(itemValue)}>
+                <Picker.Item label="Cash" value="cash" />
+                <Picker.Item label="Banking" value="banking" />
+                <Picker.Item label="ATM" value="atm" />
+              </Picker>
+
+              <Text style={styles.totalText}>
+                Total: $
+                {dataOrderMenu.reduce((acc, obj) => {
+                  return acc + obj.total;
+                }, 0)}
+              </Text>
+              <View style={styles.invoiceFooter}>
+                <QRCode value={Math.random().toString()} size={100} />
+              </View>
+            </View>
+          </View>
+        </>
+      )}
+    </>
   );
 };
 
@@ -122,6 +224,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     textAlign: 'center',
+    textAlignVertical: 'center',
   },
   invoiceList: {
     flex: 1,
@@ -138,11 +241,13 @@ const styles = StyleSheet.create({
   invoicePrice: {
     fontSize: 14,
     color: '#777',
+    fontWeight: '600',
   },
   invoiceQuantity: {
     fontSize: 14,
     color: '#777',
     marginHorizontal: 5,
+    fontWeight: '600',
   },
   invoiceSubtotal: {
     fontSize: 14,
@@ -162,5 +267,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  backgroundModal: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    flex: 1,
   },
 });

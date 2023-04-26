@@ -222,7 +222,7 @@ const Restaurant = ({route, navigation}) => {
               )}
             </ScrollView>
             <View>
-              <Text style={styles.timeText}>● Rating</Text>
+              <Text style={styles.menuText}>Rating</Text>
               {loading || dataRating === '' ? (
                 <View style={styles.loading}>
                   <ActivityIndicator size="large" color="black" />

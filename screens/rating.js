@@ -19,7 +19,6 @@ const Rating = ({route, navigation}) => {
   const [defaultRating, setDefaultRating] = useState(0);
   const maxRating = [1, 2, 3, 4, 5];
   const [comment, setComment] = useState('');
-  const [average, setAverage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRating = async () => {
@@ -118,6 +117,9 @@ const Rating = ({route, navigation}) => {
       </View>
       <View style={styles.comment}>
         <TextInput
+          style={{padding: 0}}
+          multiline
+          numberOfLines={4}
           value={comment}
           onChangeText={text => setComment(text)}
           placeholder="Your comment .."></TextInput>
@@ -137,7 +139,7 @@ const Rating = ({route, navigation}) => {
         ) : null}
       </View>
       <TouchableOpacity onPress={handleRating} style={styles.buttonRate}>
-        <View style={{flexDirection: 'row'}}>
+        <View style={{flexDirection: 'row', justifyContent: 'center'}}>
           <Text style={styles.textRate}>Rate</Text>
           {loading ? (
             <ActivityIndicator
@@ -214,6 +216,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '700',
     textAlign: 'center',
+    marginRight: 10,
   },
   comment: {
     marginBottom: 20,

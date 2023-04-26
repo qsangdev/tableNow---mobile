@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     backgroundColor: 'black',
-    opacity: 0.2,
+    opacity: 0.05,
   },
   welcome: {
     position: 'absolute',

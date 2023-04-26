@@ -3,17 +3,16 @@ import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Profile = ({navigation, route}) => {
-  const onGoBack = route.params.onGoBack;
+  const staff = route.params.staff;
+  const resName = route.params.profile;
 
   return (
     <View style={styles.profileContainer}>
       <View style={styles.header}>
         <TouchableOpacity
+          style={{top: 20, left: 20}}
           onPress={() => {
-            {
-              navigation.navigate('Tables');
-              onGoBack();
-            }
+            navigation.navigate('Tables');
           }}>
           <Ionicons
             size={50}
@@ -24,18 +23,18 @@ const Profile = ({navigation, route}) => {
           <Image
             style={styles.avatar}
             source={{
-              uri: 'https://bootdey.com/img/Content/avatar/avatar1.png',
+              uri: staff.staffPhoto,
             }}
           />
 
-          <Text style={styles.name}>John Smith</Text>
-          <Text style={styles.id}>ID: 0001</Text>
+          <Text style={styles.name}>{staff.accountName}</Text>
+          <Text style={styles.id}>{resName}</Text>
         </View>
       </View>
       <View style={styles.body}>
-        <Text style={styles.gender}>Gender: Male</Text>
-        <Text style={styles.phone}>Phone: 0962788922</Text>
-        <Text style={styles.email}>Email: js@gmail.com</Text>
+        <Text style={styles.gender}>{staff.staffName}</Text>
+        <Text style={styles.gender}>{staff.staffSex}</Text>
+        <Text style={styles.phone}>{staff.staffPhone}</Text>
       </View>
     </View>
   );
@@ -57,11 +56,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 1,
-    borderColor: 'white',
+    width: 150,
+    height: 150,
+    borderRadius: 100,
   },
   name: {
     fontSize: 22,
