@@ -168,6 +168,9 @@ const Booking = ({route, navigation}) => {
           if (res.data.status === 'ERR') {
             return alert(res.data.message);
           } else {
+            await axios.post('http://10.0.2.2:3001/api/order-menu/create', {
+              orderID: res.data.data._id,
+            });
             await axios
               .post(
                 `http://10.0.2.2:3001/api/table/update-status/${item.restaurantID}`,
@@ -176,6 +179,7 @@ const Booking = ({route, navigation}) => {
                     {
                       _id: tableId,
                       status: 'unavailable',
+                      orderID: res.data.data._id,
                     },
                   ],
                 },
@@ -709,7 +713,7 @@ const styles = StyleSheet.create({
     color: 'black',
     fontWeight: '700',
     textAlignVertical: 'center',
-    marginLeft: 10,
+    marginHorizontal: 15,
   },
   closeButton: {
     position: 'absolute',

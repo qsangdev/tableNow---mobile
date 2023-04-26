@@ -13,14 +13,16 @@ import {
   Alert,
   Image,
   Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import 'react-native-get-random-values';
-import DATA from '../hardData/DATA';
 import CheckBox from '@react-native-community/checkbox';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import NumericInput from 'react-native-numeric-input';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import moment from 'moment';
 
 const {width} = Dimensions.get('window');
 const {height} = Dimensions.get('window');
@@ -28,416 +30,493 @@ const {height} = Dimensions.get('window');
 const IMG_WIDTH = width / 2 - 60;
 
 const Tables = ({route, navigation}) => {
+  const [resID, setResID] = useState('');
+  const [staffID, setStaffID] = useState('');
+  const [dataTables, setDataTables] = useState([]);
+  const [dataStaff, setDataStaff] = useState([]);
+  const [dataTimes, setDataTimes] = useState([]);
+  const [dataMenu, setDataMenu] = useState([]);
+  const [clickedTime, setClickedTime] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const [clicked, setClicked] = useState(false);
   const [openBooked, setOpenBooked] = useState(false);
   const [openGuest, setOpenGuest] = useState(false);
-  const [tables, setTables] = useState([]);
   const [openMenu, setOpenMenu] = useState(false);
   const [tableName, setTableName] = useState('');
   const [selectedTableIndex, setSelectedTableIndex] = useState(-1);
-  const [setSelectionFunctions, setSetSelectionFunctions] = useState([]);
+  const [isSelected, setSelection] = useState(false);
+
+  const [orderID, setOrderID] = useState('');
+  const [addDish, setAddDish] = useState([]);
+  const [orderMenuID, setOrderMenuID] = useState('');
+
+  const [guestName, setGuestName] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
+  const [guestPeoples, setGuestPeoples] = useState('');
+
+  const getID = async () => {
+    const resID = await AsyncStorage.getItem('resID');
+    const staffID = await AsyncStorage.getItem('staffID');
+    setResID(resID);
+    setStaffID(staffID);
+  };
+
+  useEffect(() => {
+    getID();
+  }, [resID, staffID]);
 
   useEffect(() => {
     const refesh = navigation.addListener('focus', () => {
-      allTables();
+      getDataTables()
     });
-    console.log(tables);
     return refesh;
-  }, [tables]);
+  }, []);
 
-  const allTables = async () => {
-    try {
-      const data = await AsyncStorage.getItem('tables');
-      const allBooked = JSON.parse(data);
-      setTables(allBooked);
-    } catch (e) {
-      console.log(e);
+  const getDataTables = async () => {
+    setLoading(true);
+    resID &&
+      (await axios
+        .get(`http://10.0.2.2:3001/api/table/get-details/${resID}`)
+        .then(res => {
+          if (res.data.status === 'ERR') {
+            return alert(res.data.message);
+          } else {
+            setLoading(false);
+            setDataTables(res.data.data.tables);
+          }
+        })
+        .catch(err => console.log(err)));
+  };
+
+  useEffect(() => {
+    getDataTables();
+  }, [resID]);
+
+  const getDataStaff = async () => {
+    setLoading(true);
+    staffID &&
+      (await axios
+        .get(`http://10.0.2.2:3001/api/staffs/get-details/${staffID}`)
+        .then(res => {
+          if (res.data.status === 'ERR') {
+            return alert(res.data.message);
+          } else {
+            setLoading(false);
+            setDataStaff(res.data.data);
+          }
+        })
+        .catch(err => console.log(err)));
+  };
+
+  useEffect(() => {
+    getDataStaff();
+  }, [staffID]);
+
+  const getDataTimes = async () => {
+    setLoading(true);
+    resID &&
+      (await axios
+        .get(`http://10.0.2.2:3001/api/profile/get-details/${resID}`)
+        .then(res => {
+          if (res.data.status === 'ERR') {
+            return alert(res.data.message);
+          } else {
+            setLoading(false);
+            setDataTimes(res.data.data);
+          }
+        })
+        .catch(err => console.log(err)));
+  };
+
+  useEffect(() => {
+    getDataTimes();
+  }, [resID]);
+
+  const getDataMenu = async () => {
+    setLoading(true);
+    resID &&
+      (await axios
+        .get(`http://10.0.2.2:3001/api/dish/get/${resID}`)
+        .then(res => {
+          if (res.data.status === 'ERR') {
+            return alert(res.data.message);
+          } else {
+            setLoading(false);
+            setDataMenu(res.data.data);
+          }
+        })
+        .catch(err => console.log(err)));
+  };
+
+  useEffect(() => {
+    getDataMenu();
+  }, [resID]);
+
+  const handleSendRequest = async () => {
+    if (!guestName || !guestPeoples || !guestPhone) {
+      return alert('Do not leave it blank');
+    } else {
+      setLoading(true);
+      await axios
+        .post('http://10.0.2.2:3001/api/order/create', {
+          restaurantID: dataTimes.restaurantID,
+          guestName: guestName,
+          guestPhone: guestPhone,
+          dateOrder: moment().format('DD/MM/YYYY'),
+          numberOfPeople: guestPeoples,
+          timeOrder: `${dataTimes.shiftTime[clickedTime - 1].timeStart} - ${
+            dataTimes.shiftTime[clickedTime - 1].timeEnd
+          }`,
+          tableName: tableName,
+        })
+        .then(async res => {
+          if (res.data.status === 'ERR') {
+            return alert(res.data.message);
+          } else {
+            await axios.post('http://10.0.2.2:3001/api/order-menu/create', {
+              orderID: res.data.data._id,
+            });
+            await axios
+              .post(
+                `http://10.0.2.2:3001/api/table/update-status/${dataTimes.restaurantID}`,
+                {
+                  tables: [
+                    {
+                      _id: selectedTableIndex,
+                      status: 'unavailable',
+                      orderID: res.data.data._id,
+                    },
+                  ],
+                },
+              )
+              .then(() => {
+                setLoading(false);
+                setOpenGuest(false);
+                getDataTables();
+              });
+          }
+        })
+        .catch(err => console.log(err));
     }
   };
 
-  const storeValue = async (table, item, value) => {
-    try {
-      let stringValue = value.toString();
-      let key = table + '_' + item;
-      await AsyncStorage.setItem(key, stringValue);
-    } catch (error) {
-      console.error(error);
+  const handleAddMenu = (id, value) => {
+    let found = false;
+    for (let i = 0; i < addDish.length; i++) {
+      if (JSON.stringify(addDish[i].dishID) === JSON.stringify(id)) {
+        found = true;
+        addDish[i].quantity = value; // Thêm key value nếu có sự trùng lặp
+        break;
+      }
     }
-  };
-
-  const logData = async () => {
-    try {
-      let keys = await AsyncStorage.getAllKeys();
-      let values = await AsyncStorage.multiGet(keys);
-      console.log(values);
-    } catch (error) {
-      console.error(error);
+    if (!found) {
+      addDish.push({dishID: id, quantity: value}); // Thêm mới một object nếu không trùng lặp
     }
+    return setAddDish(addDish);
   };
 
-  const getValue = async (table, item) => {
-    try {
-      let key = table + '_' + item;
-      let stringValue = await AsyncStorage.getItem(key);
-      let numValue = Number(stringValue) || 0;
-      return numValue;
-    } catch (error) {
-      console.error(error);
+  const handleSubmitMenu = async () => {
+    if (addDish.length === 0) {
+      return alert('You have not selected the dish yet');
+    } else {
+      await axios
+        .post(`http://10.0.2.2:3001/api/order-menu/update/${orderID}`, {
+          ordered: addDish,
+        })
+        .then(res => {
+          setOrderMenuID(res.data.data._id);
+          setOpenMenu(false);
+          setAddDish([]);
+        })
+        .catch(err => alert(err));
     }
-  };
-
-  const handleOpenGuest = () => {
-    setOpenGuest(!openGuest);
-  };
-
-  const ModalComponent = props => {
-    // Get the props
-    const {setSelection} = props;
-
-    // Return the modal UI
-    return (
-      <Modal animationType="slide" transparent={true} visible={openGuest}>
-        <View style={styles.modalContainer1}>
-          <SafeAreaView style={styles.modalHeader}>
-            <TouchableOpacity
-              onPress={() => {
-                setOpenGuest(!openGuest);
-                setOpenMenu(!openMenu);
-                setSelection(true);
-              }}>
-              <Ionicons size={30} color="maroon" name="send"></Ionicons>
-            </TouchableOpacity>
-            <Text style={styles.modalText}>Table {tableName}</Text>
-            <TouchableOpacity onPress={() => handleOpenGuest()}>
-              <Ionicons size={30} color="maroon" name="close-circle"></Ionicons>
-            </TouchableOpacity>
-          </SafeAreaView>
-          <ScrollView style={styles.modalBox}>
-            <View>
-              <TextInput
-                style={styles.input}
-                placeholder="Guest name"></TextInput>
-              <TextInput
-                placeholder="Guest phone number"
-                keyboardType="numeric"
-                style={styles.input}></TextInput>
-              <TextInput
-                placeholder="Number of guests"
-                keyboardType="numeric"
-                style={styles.input}></TextInput>
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
-    );
   };
 
   return (
     <>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.welcomeButton}
-            onPress={() => {
-              setClicked(!clicked);
-            }}>
-            <Image
-              style={styles.avatar}
-              source={{
-                uri: 'https://bootdey.com/img/Content/avatar/avatar1.png',
-              }}
-            />
-            <Text style={styles.buttonText}>John Smith</Text>
-            <Ionicons
-              size={30}
-              color={'white'}
-              name={
-                clicked
-                  ? 'arrow-back-circle-outline'
-                  : 'arrow-forward-circle-outline'
-              }></Ionicons>
-          </TouchableOpacity>
-          {clicked && (
-            <TouchableOpacity
-              style={styles.roundButton}
-              onPress={() =>
-                navigation.navigate('Profile', {
-                  tableName: tableName,
-                  onGoBack: () => {
-                    setOpenMenu(false);
-                    setTableName('');
-                  },
-                })
-              }>
-              {/* <Text style={styles.buttonText}>Profile</Text> */}
-              <Ionicons
-                size={30}
-                color={'white'}
-                name="person-circle-outline"></Ionicons>
-            </TouchableOpacity>
-          )}
-          {clicked && (
-            <TouchableOpacity style={styles.roundButton} onPress={logData}>
-              {/* <Text style={styles.buttonText}>Log Out</Text> */}
-              <Ionicons
-                size={30}
-                color={'white'}
-                name="log-out-outline"></Ionicons>
-            </TouchableOpacity>
-          )}
+      {loading ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color="black" />
         </View>
-
-        <ScrollView>
-          <View style={styles.tables}>
+      ) : (
+        <View style={styles.container}>
+          <View style={styles.header}>
             <TouchableOpacity
-              style={styles.tableAvaiText}
-              onPress={() => setOpenBooked(!openBooked)}>
-              <Ionicons size={30} name="restaurant-outline"></Ionicons>
-              <Text style={styles.note}>Reserved: </Text>
-              <Text style={styles.note}>
-                {
-                  DATA[0].shift[0].tables.filter(
-                    e => e.status === 'unavailable',
-                  ).length
-                }{' '}
-                / {DATA[0].shift[0].tables.length}
-              </Text>
+              style={styles.welcomeButton}
+              onPress={() => {
+                setClicked(!clicked);
+              }}>
+              <Image
+                style={styles.avatar}
+                source={{
+                  uri: dataStaff.staffPhoto
+                    ? dataStaff.staffPhoto
+                    : 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png',
+                }}
+              />
+              <Text style={styles.buttonText}>{dataStaff.accountName}</Text>
+              <Ionicons
+                size={30}
+                color={'white'}
+                name={
+                  clicked
+                    ? 'arrow-back-circle-outline'
+                    : 'arrow-forward-circle-outline'
+                }></Ionicons>
             </TouchableOpacity>
-            {DATA[0].shift[0].tables.map((e, index) => {
-              const [isSelected, setSelection] = useState(false);
-              setSelectionFunctions.push(setSelection); // push each setSelection function to the setSelectionFunctions array
-              return (
-                <View key={e.id}>
-                  <TouchableOpacity
-                    style={styles.table}
-                    onPress={
-                      e.status === 'unavailable'
-                        ? () => {
-                            setOpenMenu(!openMenu);
-                            setTableName(e.name);
-                          }
-                        : () => {
-                            handleOpenGuest();
-                            setTableName(e.name);
-                            setSelectedTableIndex(index);
-                          }
-                    }>
-                    {e.status === 'available' ? (
-                      <CheckBox
-                        tintColors={'green'}
-                        disabled={true}
-                        value={isSelected}
-                        style={styles.checkbox}
-                        onValueChange={setSelection}
-                      />
-                    ) : (
-                      <CheckBox
-                        tintColors={'green'}
-                        disabled={true}
-                        value={!isSelected}
-                        style={styles.checkbox}
-                        onValueChange={setSelection}
-                      />
-                    )}
-                    <Text style={styles.tableName}>{e.name}</Text>
-                    <Text style={styles.tableName}>
-                      <Ionicons name="person" size={16} /> {e.minPeople}
-                    </Text>
-                    <Text style={styles.tableName}>
-                      <Ionicons name="people" size={16} /> {e.maxPeople}
-                    </Text>
-                  </TouchableOpacity>
-                  {selectedTableIndex === index && (
-                    <ModalComponent
-                      setSelection={setSelectionFunctions[selectedTableIndex]}
-                      visible={selectedTableIndex === index}
-                    />
-                  )}
-                </View>
-              );
-            })}
-          </View>
-        </ScrollView>
-        <Modal animationType="slide" transparent={true} visible={openMenu}>
-          <View style={styles.modalContainer}>
-            <SafeAreaView style={styles.modalHeader}>
+            {clicked && (
               <TouchableOpacity
+                style={styles.roundButton}
                 onPress={() =>
-                  navigation.navigate('Invoice', {
-                    tableName: tableName,
-                    onGoBack: () => {
-                      setOpenMenu(false);
-                      setTableName('');
-                    },
+                  navigation.navigate('Profile', {
+                    staff: dataStaff,
+                    profile: dataTimes.restaurantName,
                   })
                 }>
                 <Ionicons
                   size={30}
-                  color="maroon"
-                  name="cash-outline"></Ionicons>
+                  color={'white'}
+                  name="person-circle-outline"></Ionicons>
               </TouchableOpacity>
-              <Text style={styles.modalText}>Table {tableName}</Text>
-              <TouchableOpacity onPress={() => setOpenMenu(!openMenu)}>
+            )}
+            {clicked && (
+              <TouchableOpacity style={styles.roundButton}>
                 <Ionicons
                   size={30}
-                  color="maroon"
-                  name="close-circle"></Ionicons>
+                  color={'white'}
+                  name="log-out-outline"></Ionicons>
               </TouchableOpacity>
-            </SafeAreaView>
-            <ScrollView style={styles.modalBox}>
-              <View style={styles.menuContainer}>
-                {DATA[0].menu.map(e => {
-                  const [numValue, setNumValue] = useState(0);
-                  useEffect(() => {
-                    // Define an async function to get the value
-                    const getValueAsync = async () => {
-                      // Get the value using await
-                      let value = await getValue(tableName, e.id);
-                      // Update the state variable with the value
-                      setNumValue(value);
-                    };
-                    // Call the async function
-                    getValueAsync();
-                  }, [tableName, e.id]); // Add tableName and e.id as dependencies
+            )}
+          </View>
+          <ScrollView>
+            <View style={styles.tables}>
+              <View style={styles.mealTimes}>
+                {dataTimes?.shiftTime?.map(e => {
                   return (
-                    <View style={styles.menu} key={e.id}>
-                      <Image style={styles.menuImage} source={{uri: e.image}} />
-                      <Text style={styles.menuItem}>{e.title}</Text>
-                      <Text>${e.price}</Text>
-                      <NumericInput
-                        key={numValue}
-                        type="plus-minus"
-                        minValue={0}
-                        maxValue={64}
-                        totalWidth={100}
-                        totalHeight={35}
-                        value={numValue}
-                        onChange={value => {
-                          storeValue(tableName, e.id, value);
-                          setNumValue(value);
-                        }}
-                      />
-                    </View>
+                    <TouchableOpacity
+                      key={e._id}
+                      onPress={() => {
+                        setClickedTime(e.shift);
+                      }}
+                      style={[
+                        e.shift === clickedTime
+                          ? styles.buttonActive
+                          : styles.buttonTime,
+                      ]}>
+                      <Text style={styles.buttonText}>
+                        {e.timeStart} - {e.timeEnd}
+                      </Text>
+                    </TouchableOpacity>
                   );
                 })}
               </View>
-            </ScrollView>
-          </View>
-        </Modal>
-        <Modal animationType="slide" transparent={true} visible={openBooked}>
-          <View style={styles.modalContainer}>
-            <SafeAreaView style={styles.modalHeader}>
-              <Text style={styles.modalText}>Booked List</Text>
-              <TouchableOpacity onPress={() => setOpenBooked(!openBooked)}>
-                <Ionicons
-                  size={30}
-                  color="maroon"
-                  name="close-circle"></Ionicons>
-              </TouchableOpacity>
-            </SafeAreaView>
-            <ScrollView style={styles.modalBox}>
-              {tables ? (
-                tables
-                  .filter(x => x.restaurant === 'Green Tangerine')
-                  .map(e => {
-                    return (
-                      <View style={styles.bookedItem} key={e.id}>
-                        <View style={styles.itemsHeader}>
-                          <Text style={styles.itemText}>
-                            <Ionicons
-                              color="maroon"
-                              size={20}
-                              name="time-outline"></Ionicons>
-                            {'  '}
-                            {e.time}
-                          </Text>
-                        </View>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="restaurant-outline"></Ionicons>
-                          {'  '}
-                          {e.restaurant}
-                        </Text>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="calendar-outline"></Ionicons>
-                          {'  '}
-                          {e.date}
-                        </Text>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="people-outline"></Ionicons>
-                          {'  '}
-                          {e.people}
-                        </Text>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="person-circle-outline"></Ionicons>
-                          {'  '}
-                          {e.name}
-                        </Text>
-                        <Text style={styles.itemText}>
-                          <Ionicons
-                            color="maroon"
-                            size={20}
-                            name="call-outline"></Ionicons>
-                          {'  '}
-                          {e.number}
-                        </Text>
-                      </View>
-                    );
-                  })
-              ) : (
-                <Text style={styles.modalText}></Text>
-              )}
-            </ScrollView>
-          </View>
-        </Modal>
-
-        {/* <Modal animationType="slide" transparent={true} visible={openGuest}>
-          <View style={styles.modalContainer1}>
-            <SafeAreaView style={styles.modalHeader}>
               <TouchableOpacity
-                onPress={() => {
-                  setOpenGuest(!openGuest);
-                  setOpenMenu(!openMenu);
-                }}>
-                <Ionicons size={30} color="maroon" name="send"></Ionicons>
+                style={styles.tableAvaiText}
+                onPress={() => setOpenBooked(!openBooked)}>
+                <Ionicons size={30} name="restaurant-outline"></Ionicons>
+                <Text style={styles.tableName}>Reserved: </Text>
+                <Text style={styles.tableName}>
+                  {
+                    dataTables
+                      .filter(e => e.shift === clickedTime)
+                      .filter(e => e.status === 'unavailable').length
+                  }{' '}
+                  / {dataTables.length / 3}
+                </Text>
               </TouchableOpacity>
-              <Text style={styles.modalText}>Table {tableName}</Text>
-              <TouchableOpacity onPress={() => handleOpenGuest()}>
-                <Ionicons
-                  size={30}
-                  color="maroon"
-                  name="close-circle"></Ionicons>
-              </TouchableOpacity>
-            </SafeAreaView>
-            <ScrollView style={styles.modalBox}>
-              <View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Guest name"></TextInput>
-                <TextInput
-                  placeholder="Guest phone number"
-                  keyboardType="numeric"
-                  style={styles.input}></TextInput>
-                <TextInput
-                  placeholder="Number of guests"
-                  keyboardType="numeric"
-                  style={styles.input}></TextInput>
+              {dataTables
+                .filter(e => e.shift === clickedTime)
+                .map(e => {
+                  return (
+                    <View key={e._id}>
+                      <TouchableOpacity
+                        style={styles.table}
+                        onPress={
+                          e.status === 'unavailable'
+                            ? () => {
+                                setOpenMenu(!openMenu);
+                                setTableName(e.name);
+                                setOrderID(e.orderID);
+                                setSelectedTableIndex(e._id);
+                              }
+                            : () => {
+                                setOpenGuest(true);
+                                setTableName(e.name);
+                                setSelectedTableIndex(e._id);
+                              }
+                        }>
+                        {e.status === 'available' ? (
+                          <CheckBox
+                            tintColors={'green'}
+                            disabled={true}
+                            value={isSelected}
+                            style={styles.checkbox}
+                            onValueChange={setSelection}
+                          />
+                        ) : (
+                          <CheckBox
+                            tintColors={'red'}
+                            disabled={true}
+                            value={!isSelected}
+                            style={styles.checkbox}
+                            onValueChange={setSelection}
+                          />
+                        )}
+                        <Text style={styles.tableName}>{e.name}</Text>
+                        <Text style={styles.tableName}>
+                          <Ionicons name="person" size={16} /> {e.minPeople}
+                        </Text>
+                        <Text style={styles.tableName}>
+                          <Ionicons name="people" size={16} /> {e.maxPeople}
+                        </Text>
+                      </TouchableOpacity>
+                      {selectedTableIndex === e._id && (
+                        <Modal
+                          animationType="slide"
+                          transparent={true}
+                          visible={openGuest}>
+                          <View style={styles.backgroundModal}>
+                            <View style={styles.modalContainer}>
+                              <SafeAreaView style={styles.modalHeader}>
+                                <TouchableOpacity
+                                  onPress={() => handleSendRequest()}>
+                                  <Ionicons
+                                    size={30}
+                                    color="maroon"
+                                    name="send"></Ionicons>
+                                </TouchableOpacity>
+                                <Text style={styles.modalText}>
+                                  {tableName}
+                                </Text>
+                                <TouchableOpacity
+                                  onPress={() => setOpenGuest(false)}>
+                                  <Ionicons
+                                    size={30}
+                                    color="maroon"
+                                    name="close-circle"></Ionicons>
+                                </TouchableOpacity>
+                              </SafeAreaView>
+                              <ScrollView style={styles.modalBox}>
+                                <TextInput
+                                  style={styles.input}
+                                  placeholder="Guest name"
+                                  onChangeText={e =>
+                                    setGuestName(e)
+                                  }></TextInput>
+                                <TextInput
+                                  placeholder="Guest phone number"
+                                  keyboardType="numeric"
+                                  style={styles.input}
+                                  onChangeText={e =>
+                                    setGuestPhone(e)
+                                  }></TextInput>
+                                <TextInput
+                                  placeholder="Number of guests"
+                                  keyboardType="numeric"
+                                  style={styles.input}
+                                  onChangeText={e =>
+                                    setGuestPeoples(e)
+                                  }></TextInput>
+                              </ScrollView>
+                            </View>
+                          </View>
+                        </Modal>
+                      )}
+                    </View>
+                  );
+                })}
+            </View>
+          </ScrollView>
+          <Modal animationType="slide" transparent={true} visible={openMenu}>
+            <View style={styles.backgroundModal}>
+              <View style={styles.modalContainer}>
+                <SafeAreaView style={styles.modalHeader}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setOpenMenu(false);
+                      navigation.navigate('Invoice', {
+                        resID: resID,
+                        staffID: staffID,
+                        orderID: orderID,
+                        tableName: tableName,
+                        tableID: selectedTableIndex,
+                        dataMenu: dataMenu,
+                        orderMenuID: orderMenuID,
+                      });
+                    }}>
+                    <Ionicons
+                      size={30}
+                      color="maroon"
+                      name="cash-outline"></Ionicons>
+                  </TouchableOpacity>
+                  <Text style={styles.modalText}>{tableName}</Text>
+                  <TouchableOpacity onPress={() => setOpenMenu(!openMenu)}>
+                    <Ionicons
+                      size={30}
+                      color="maroon"
+                      name="close-circle"></Ionicons>
+                  </TouchableOpacity>
+                </SafeAreaView>
+                <ScrollView style={styles.modalBox}>
+                  <View style={styles.menuContainer}>
+                    {dataMenu.map(e => {
+                      return (
+                        <View style={styles.menu} key={e._id}>
+                          <Image
+                            style={styles.menuImage}
+                            source={{uri: e.dishImage[0]}}
+                          />
+                          <Text style={styles.menuItem}>{e.dishName}</Text>
+                          <Text>${e.dishPrice}</Text>
+                          <NumericInput
+                            type="plus-minus"
+                            minValue={0}
+                            maxValue={64}
+                            totalWidth={100}
+                            totalHeight={35}
+                            onChange={value => handleAddMenu(e._id, value)}
+                          />
+                        </View>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+                <SafeAreaView>
+                  <TouchableOpacity
+                    onPress={() => handleSubmitMenu()}
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      backgroundColor: 'maroon',
+                      padding: 10,
+                      borderRadius: 10,
+                    }}>
+                    <Text style={styles.buttonText}>Submit </Text>
+                    <Ionicons
+                      size={20}
+                      name="checkmark-done"
+                      style={{color: 'white'}}></Ionicons>
+                  </TouchableOpacity>
+                </SafeAreaView>
               </View>
-            </ScrollView>
-          </View>
-        </Modal> */}
-      </View>
+            </View>
+          </Modal>
+          <Modal animationType="slide" transparent={true} visible={openBooked}>
+            <View style={styles.modalContainer}>
+              <SafeAreaView style={styles.modalHeader}>
+                <Text style={styles.modalText}>Booked List</Text>
+                <TouchableOpacity onPress={() => setOpenBooked(!openBooked)}>
+                  <Ionicons
+                    size={30}
+                    color="maroon"
+                    name="close-circle"></Ionicons>
+                </TouchableOpacity>
+              </SafeAreaView>
+            </View>
+          </Modal>
+        </View>
+      )}
     </>
   );
 };
@@ -452,7 +531,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginHorizontal: 30,
+    marginHorizontal: 22,
     marginTop: 5,
   },
   headerContent: {
@@ -460,9 +539,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 50,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     borderWidth: 1,
     borderColor: 'white',
   },
@@ -471,18 +550,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  note: {
-    color: 'black',
-    fontWeight: '500',
-    textAlign: 'center',
-    fontSize: 14,
-  },
   tables: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
     marginVertical: 10,
     marginHorizontal: 20,
+    gap: 11,
   },
   tableAvaiText: {
     borderWidth: 1,
@@ -495,6 +569,7 @@ const styles = StyleSheet.create({
     height: 120,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'white',
   },
   table: {
     padding: 5,
@@ -505,6 +580,7 @@ const styles = StyleSheet.create({
     height: 120,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'white',
   },
   tableName: {
     alignSelf: 'center',
@@ -512,9 +588,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   welcomeButton: {
-    padding: 10,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 15,
+    borderBottomRightRadius: 15,
+    borderTopRightRadius: 15,
+    borderBottomLeftRadius: 30,
+    borderTopLeftRadius: 30,
     alignItems: 'center',
     marginTop: 10,
     height: 55,
@@ -522,6 +600,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     alignSelf: 'flex-start',
+    paddingRight: 15,
   },
   roundButton: {
     padding: 5,
@@ -535,15 +614,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 500,
-  },
   modalContainer: {
-    margin: 5,
-    height: 400,
-    top: height / 2 - 60,
+    marginHorizontal: 10,
+    maxHeight: 560,
+    top: height / 2 - 200,
     backgroundColor: 'white',
     borderRadius: 20,
     padding: 20,
@@ -555,25 +629,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.58,
     shadowRadius: 16.0,
     elevation: 24,
-    borderColor: 'black',
-    borderWidth: 1,
-  },
-  modalContainer1: {
-    margin: 5,
-    height: 300,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 12,
-    },
-    shadowOpacity: 0.58,
-    shadowRadius: 16.0,
-    elevation: 24,
-    borderColor: 'black',
-    borderWidth: 1,
   },
   modalBox: {
     marginBottom: 10,
@@ -665,5 +720,43 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
     elevation: 3,
+  },
+  mealTimes: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+    borderColor: 'black',
+    borderWidth: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: 'white',
+  },
+  buttonTime: {
+    padding: 8,
+    backgroundColor: 'silver',
+    borderRadius: 5,
+    backgroundColor: 'gray',
+    marginHorizontal: 8,
+  },
+  buttonActive: {
+    padding: 8,
+    backgroundColor: 'gray',
+    alignSelf: 'center',
+    borderRadius: 5,
+    backgroundColor: 'black',
+    marginHorizontal: 8,
+  },
+  buttonText: {
+    fontWeight: '800',
+    color: 'white',
+    fontSize: 14,
+  },
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  backgroundModal: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    flex: 1,
   },
 });

@@ -124,28 +124,28 @@ const Home = ({navigation}) => {
     }
   };
 
-  // const handleDeleteData = () => {
-  //   try {
-  //     Alert.alert('Are you sure?', 'Delete all reservation?', [
-  //       {
-  //         text: 'Cancel',
-  //         onPress: () => console.log('Cancel Pressed'),
-  //         style: 'cancel',
-  //       },
-  //       {
-  //         text: 'OK',
-  //         onPress: async () => {
-  //           await AsyncStorage.removeItem('tables');
-  //           allTables();
-  //           setBooked(0);
-  //           console.log('All data deleted.');
-  //         },
-  //       },
-  //     ]);
-  //   } catch (e) {
-  //     console.log(e);
-  //   }
-  // };
+  const handleCancelAllOrders = () => {
+    try {
+      Alert.alert('Are you sure?', 'Delete all reservation?', [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            for (let order of dataOrder) {
+              callAPICancelOrder(order._id, order.restaurantID);
+            }
+            alert('Deleted all orders!');
+          },
+        },
+      ]);
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   const handleCancelOrder = (id, resID) => {
     try {
@@ -157,36 +157,8 @@ const Home = ({navigation}) => {
         },
         {
           text: 'OK',
-          onPress: async () => {
-            await axios
-              .put(`http://10.0.2.2:3001/api/order/update/${id}`, {
-                cancelled: true,
-              })
-              .then(async res => {
-                if (res.data.status === 'ERR') {
-                  return alert(res.data.message);
-                } else {
-                  await axios
-                    .post(
-                      `http://10.0.2.2:3001/api/table/update-status/${
-                        DATA?.filter(e => e.restaurantID === resID)[0]
-                          .restaurantID
-                      }`,
-                      {
-                        tables: [
-                          {
-                            _id: id,
-                            status: 'available',
-                          },
-                        ],
-                      },
-                    )
-                    .then(() => {
-                      getUser();
-                      getDataOrder();
-                    });
-                }
-              });
+          onPress: () => {
+            callAPICancelOrder(id, resID);
           },
         },
       ]);
@@ -195,13 +167,63 @@ const Home = ({navigation}) => {
     }
   };
 
+  const callAPICancelOrder = async (id, resID) => {
+    await axios
+      .put(`http://10.0.2.2:3001/api/order/update/${id}`, {
+        cancelled: true,
+      })
+      .then(async res => {
+        if (res.data.status === 'ERR') {
+          return alert(res.data.message);
+        } else {
+          await axios
+            .post(
+              `http://10.0.2.2:3001/api/table/update-status/${
+                DATA?.filter(e => e.restaurantID === resID)[0].restaurantID
+              }`,
+              {
+                tables: [
+                  {
+                    _id: id,
+                    status: 'available',
+                  },
+                ],
+              },
+            )
+            .then(() => {
+              getUser();
+              getDataOrder();
+            });
+        }
+      });
+  };
+
   const getDATA = async () => {
     setLoading(true);
     await axios
       .get('http://10.0.2.2:3001/api/profile/getAll')
       .then(res => {
         setLoading(false);
-        setDATA(res.data.data.filter(e => e.active === true));
+        const restaurants = res.data.data
+          .filter(e => e.active === true)
+          .map(e => {
+            return {
+              ...e,
+              distance:
+                getDistance(
+                  {
+                    latitude: currentLocation.latitude || 0,
+                    longitude: currentLocation.longitude || 0,
+                  },
+                  {
+                    latitude: e.latitude,
+                    longitude: e.longitude,
+                  },
+                ) / 1000,
+            };
+          });
+
+        setDATA(restaurants);
       })
       .catch(err => console.log(err));
   };
@@ -299,6 +321,10 @@ const Home = ({navigation}) => {
     return DATA.sort((a, b) => b.maxDiscount - a.maxDiscount);
   };
 
+  const sortByDistance = () => {
+    return DATA.sort((a, b) => a.distance - b.distance);
+  };
+
   return (
     <>
       <SafeAreaView>
@@ -312,8 +338,7 @@ const Home = ({navigation}) => {
               <View style={styles.modalContainer}>
                 <SafeAreaView style={styles.modalHeader}>
                   <TouchableOpacity
-                  //  onPress={tables && handleDeleteData}
-                  >
+                    onPress={dataOrder && handleCancelAllOrders}>
                     <Ionicons
                       size={30}
                       color="maroon"
@@ -483,9 +508,7 @@ const Home = ({navigation}) => {
             ) : null}
           </View>
           <Picker
-            style={styles.picker}
             mode="dropdown"
-            itemStyle={styles.itemPicker}
             selectedValue={sort}
             onValueChange={(itemValue, itemIndex) => setSort(itemValue)}>
             <Picker.Item label="Sort by Discount" value="discount" />
@@ -500,6 +523,8 @@ const Home = ({navigation}) => {
                   ? sortByRating() && filterRestaurant()
                   : sort === 'discount'
                   ? sortByDiscount() && filterRestaurant()
+                  : sort === 'distance'
+                  ? sortByDistance() && filterRestaurant()
                   : DATA
               }
               numColumns={2}

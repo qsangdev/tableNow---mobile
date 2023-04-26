@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import React, {useState} from 'react';
 import {
   StyleSheet,
@@ -13,15 +15,31 @@ const Login = ({navigation}) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const onPressLogin = () => {
-    // check if email and password are not empty
-    if (username && password) {
-      navigation.navigate('Tables');
-    } else {
-      // alert user to fill in all inputs
-      Alert.alert('Please fill in all inputs');
-    }
+  const handleLogIn = async () => {
+    await axios
+      .post('http://10.0.2.2:3001/api/staffs/log-in', {
+        accountName: username,
+        accountPassword: password,
+      })
+      .then(async res => {
+        if (res.data.status === 'ERR') {
+          return alert(res.data.message);
+        } else {
+          await AsyncStorage.setItem('resID', res.data.id);
+          await AsyncStorage.setItem('staffID', res.data.staffID);
+          await AsyncStorage.setItem('access_token', res.data.access_token);
+          axios.defaults.headers.common[
+            'Authorization'
+          ] = `Bearer ${res.data.access_token}`;
+          navigation.navigate('Tables');
+          
+        }
+      })
+      .catch(err => {
+        return console.log(err);
+      });
   };
+
   return (
     <View style={styles.container}>
       <View>
@@ -46,7 +64,7 @@ const Login = ({navigation}) => {
           value={password}
         />
       </View>
-      <TouchableOpacity onPress={onPressLogin} style={styles.loginBtn}>
+      <TouchableOpacity onPress={handleLogIn} style={styles.loginBtn}>
         <Text style={styles.loginText}>Log In</Text>
       </TouchableOpacity>
     </View>
