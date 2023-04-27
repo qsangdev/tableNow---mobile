@@ -111,13 +111,13 @@ const Home = ({navigation}) => {
 
   const getUser = async () => {
     try {
-      const data = await AsyncStorage.getItem('user');
+      const data = await AsyncStorage.getItem('users');
       if (!data || data.length === 0) {
         return;
       } else {
         const user = JSON.parse(data);
-        setUserName(user.userName);
-        setUserPhone(user.userPhone);
+        setUserName(user.map(e => e.userName));
+        setUserPhone(user.map(e => e.userPhone));
       }
     } catch (e) {
       console.log(e);
@@ -136,7 +136,12 @@ const Home = ({navigation}) => {
           text: 'OK',
           onPress: async () => {
             for (let order of dataOrder) {
-              callAPICancelOrder(order._id, order.restaurantID);
+              callAPICancelOrder(
+                order._id,
+                order.tableID,
+                order.restaurantID,
+                order.orderMenuID,
+              );
             }
             alert('Deleted all orders!');
           },
@@ -147,7 +152,7 @@ const Home = ({navigation}) => {
     }
   };
 
-  const handleCancelOrder = (id, resID) => {
+  const handleCancelOrder = (id, tableID, resID, orderMenuID) => {
     try {
       Alert.alert('Are you sure?', 'Delete this reservation?', [
         {
@@ -158,7 +163,7 @@ const Home = ({navigation}) => {
         {
           text: 'OK',
           onPress: () => {
-            callAPICancelOrder(id, resID);
+            callAPICancelOrder(id, tableID, resID, orderMenuID);
           },
         },
       ]);
@@ -167,7 +172,7 @@ const Home = ({navigation}) => {
     }
   };
 
-  const callAPICancelOrder = async (id, resID) => {
+  const callAPICancelOrder = async (id, tableID, resID, orderMenuID) => {
     await axios
       .put(`http://10.0.2.2:3001/api/order/update/${id}`, {
         cancelled: true,
@@ -176,20 +181,18 @@ const Home = ({navigation}) => {
         if (res.data.status === 'ERR') {
           return alert(res.data.message);
         } else {
+          await axios.delete(
+            `http://10.0.2.2:3001/api/order-menu/delete/${orderMenuID}`,
+          );
           await axios
-            .post(
-              `http://10.0.2.2:3001/api/table/update-status/${
-                DATA?.filter(e => e.restaurantID === resID)[0].restaurantID
-              }`,
-              {
-                tables: [
-                  {
-                    _id: id,
-                    status: 'available',
-                  },
-                ],
-              },
-            )
+            .post(`http://10.0.2.2:3001/api/table/update-status/${resID}`, {
+              tables: [
+                {
+                  _id: tableID,
+                  status: 'available',
+                },
+              ],
+            })
             .then(() => {
               getUser();
               getDataOrder();
@@ -242,7 +245,8 @@ const Home = ({navigation}) => {
           setDataOrder(
             res.data.data.filter(
               e =>
-                (e.guestName === userName || e.guestPhone === userPhone) &&
+                userName.includes(e.guestName) === true &&
+                userPhone.includes(e.guestPhone) === true &&
                 e.completed === false &&
                 e.cancelled === false,
             ),
@@ -281,13 +285,16 @@ const Home = ({navigation}) => {
               if (res.data.status === 'ERR') {
                 return alert(res.data.message);
               } else {
+                await axios.delete(
+                  `http://10.0.2.2:3001/api/order-menu/delete/${e.orderMenuID}`,
+                );
                 await axios
                   .post(
                     `http://10.0.2.2:3001/api/table/update-status/${e.restaurantID}`,
                     {
                       tables: [
                         {
-                          _id: e._id,
+                          _id: e.tableID,
                           status: 'available',
                         },
                       ],
@@ -361,79 +368,88 @@ const Home = ({navigation}) => {
                     dataOrder.map(e => {
                       return (
                         <View style={styles.bookedItem} key={e._id}>
-                          <View style={styles.itemText}>
-                            <Ionicons
-                              style={{marginVertical: -4}}
-                              color="maroon"
-                              size={22}
-                              name="time-outline"></Ionicons>
-                            <Ionicons
-                              style={{marginVertical: 2}}
-                              color="maroon"
-                              size={22}
-                              name="restaurant-outline"></Ionicons>
-                            <Ionicons
-                              style={{marginTop: 2, marginBottom: 1}}
-                              color="maroon"
-                              size={25}
-                              name="location-outline"></Ionicons>
-                            <Ionicons
-                              style={{marginVertical: 5}}
-                              color="maroon"
-                              size={22}
-                              name="calendar-outline"></Ionicons>
-                            <Ionicons
-                              style={{marginVertical: -1}}
-                              color="maroon"
-                              size={22}
-                              name="grid-outline"></Ionicons>
-                            <Ionicons
-                              style={{marginVertical: 1}}
-                              color="maroon"
-                              size={22}
-                              name="people-outline"></Ionicons>
-                            <Ionicons
-                              style={{marginVertical: -2}}
-                              color="maroon"
-                              size={22}
-                              name="person-circle-outline"></Ionicons>
-                            <Ionicons
-                              style={{marginVertical: 2}}
-                              color="maroon"
-                              size={22}
-                              name="call-outline"></Ionicons>
-                          </View>
-
-                          <View style={{marginLeft: 10, marginRight: 20}}>
-                            <Text style={styles.itemText}>{e.timeOrder}</Text>
-                            <Text style={styles.itemText}>
-                              {DATA.filter(
-                                i => i.restaurantID === e.restaurantID,
-                              ).map(i => {
-                                return i.restaurantName;
-                              })}
-                            </Text>
-                            <Text style={styles.itemText}>
-                              {DATA.filter(
-                                i => i.restaurantID === e.restaurantID,
-                              ).map(i => {
-                                return i.restaurantAddress;
-                              })}
-                            </Text>
-                            <Text style={styles.itemText}>{e.dateOrder}</Text>
-                            <Text style={styles.itemText}>{e.tableName}</Text>
-                            <Text style={styles.itemText}>
-                              {' '}
-                              {e.numberOfPeople}
-                            </Text>
-                            <Text style={styles.itemText}>{e.guestName}</Text>
-                            <View style={styles.itemsHeader}>
-                              <Text style={styles.itemText}>
-                                {e.guestPhone}
+                          <View style={styles.infoContainer}>
+                            <View style={styles.info}>
+                              <Ionicons
+                                color="maroon"
+                                size={25}
+                                name="restaurant-outline"></Ionicons>
+                              <Text style={styles.infoText}>
+                                {DATA.filter(
+                                  i => i.restaurantID === e.restaurantID,
+                                ).map(i => {
+                                  return i.restaurantName;
+                                })}
                               </Text>
+                            </View>
+                            <View style={styles.info}>
+                              <Ionicons
+                                color="maroon"
+                                size={25}
+                                name="location-outline"></Ionicons>
+                              <Text style={styles.infoText}>
+                                {DATA.filter(
+                                  i => i.restaurantID === e.restaurantID,
+                                ).map(i => {
+                                  return i.restaurantAddress;
+                                })}
+                              </Text>
+                            </View>
+                            <View style={styles.info}>
+                              <Ionicons
+                                color="maroon"
+                                size={25}
+                                name="calendar-outline"></Ionicons>
+                              <Text style={styles.infoText}>{e.dateOrder}</Text>
+                            </View>
+                            <View style={styles.info}>
+                              <Ionicons
+                                color="maroon"
+                                size={25}
+                                name="time-outline"></Ionicons>
+                              <Text style={styles.infoText}>{e.timeOrder}</Text>
+                            </View>
+                            <View style={styles.info}>
+                              <Ionicons
+                                color="maroon"
+                                size={25}
+                                name="grid-outline"></Ionicons>
+                              <Text style={styles.infoText}>{e.tableName}</Text>
+                            </View>
+                            <View style={styles.info}>
+                              <Ionicons
+                                color="maroon"
+                                size={25}
+                                name="people-outline"></Ionicons>
+                              <Text style={styles.infoText}>
+                                {e.numberOfPeople}
+                              </Text>
+                            </View>
+                            <View style={styles.info}>
+                              <Ionicons
+                                color="maroon"
+                                size={25}
+                                name="person-circle-outline"></Ionicons>
+                              <Text style={styles.infoText}>{e.guestName}</Text>
+                            </View>
+                            <View style={styles.itemsHeader}>
+                              <View style={styles.info}>
+                                <Ionicons
+                                  color="maroon"
+                                  size={25}
+                                  name="call-outline"></Ionicons>
+                                <Text style={styles.infoText}>
+                                  {e.guestPhone}
+                                </Text>
+                              </View>
                               <TouchableOpacity
                                 onPress={() =>
-                                  handleCancelOrder(e._id, e.restaurantID)
+                                  handleCancelOrder(
+                                    e._id,
+                                    e.tableID,
+                                    e.restaurantID,
+                                    e.orderMenuID,
+                                  )
                                 }>
                                 <Ionicons
                                   color="maroon"
@@ -560,7 +576,7 @@ const Home = ({navigation}) => {
                     </View>
                     <View style={styles.resInfo}>
                       {currentLocation && (
-                        <Text style={styles.distant}>
+                        <Text style={styles.distance}>
                           {`${
                             getDistance(
                               {
@@ -775,12 +791,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  picker: {},
-  distant: {
+  distance: {
     fontWeight: '800',
   },
   resInfo: {
     position: 'absolute',
     bottom: 0,
+  },
+  info: {
+    flexDirection: 'row',
+    marginVertical: 1,
+    width: '92%',
+  },
+  infoText: {
+    fontSize: 15,
+    color: 'black',
+    fontWeight: '700',
+    textAlignVertical: 'center',
+    marginLeft: 15,
   },
 });

@@ -11,9 +11,7 @@ const Profile = ({navigation, route}) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={{top: 20, left: 20}}
-          onPress={() => {
-            navigation.navigate('Tables');
-          }}>
+          onPress={() => navigation.navigate('Tables')}>
           <Ionicons
             size={50}
             color="maroon"

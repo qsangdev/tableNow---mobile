@@ -68,10 +68,10 @@ const Tables = ({route, navigation}) => {
 
   useEffect(() => {
     const refesh = navigation.addListener('focus', () => {
-      getDataTables()
+      getDataTables();
     });
     return refesh;
-  }, []);
+  }, [resID]);
 
   const getDataTables = async () => {
     setLoading(true);
@@ -161,6 +161,7 @@ const Tables = ({route, navigation}) => {
       await axios
         .post('http://10.0.2.2:3001/api/order/create', {
           restaurantID: dataTimes.restaurantID,
+          tableID: selectedTableIndex,
           guestName: guestName,
           guestPhone: guestPhone,
           dateOrder: moment().format('DD/MM/YYYY'),
@@ -174,9 +175,18 @@ const Tables = ({route, navigation}) => {
           if (res.data.status === 'ERR') {
             return alert(res.data.message);
           } else {
-            await axios.post('http://10.0.2.2:3001/api/order-menu/create', {
-              orderID: res.data.data._id,
-            });
+            await axios
+              .post('http://10.0.2.2:3001/api/order-menu/create', {
+                orderID: res.data.data._id,
+              })
+              .then(async res => {
+                await axios.put(
+                  `http://10.0.2.2:3001/api/order/update/${res.data.data.orderID}`,
+                  {
+                    orderMenuID: res.data.data._id,
+                  },
+                );
+              });
             await axios
               .post(
                 `http://10.0.2.2:3001/api/table/update-status/${dataTimes.restaurantID}`,
@@ -233,6 +243,25 @@ const Tables = ({route, navigation}) => {
     }
   };
 
+  const logOut = () => {
+    Alert.alert('Log out Comfirm', 'Do you want to log out?', [
+      {
+        text: 'Cancel',
+        onPress: () => console.log('Cancel Pressed'),
+        style: 'cancel',
+      },
+      {
+        text: 'OK',
+        onPress: async () => {
+          await AsyncStorage.removeItem('resID');
+          await AsyncStorage.removeItem('access_token');
+          await AsyncStorage.removeItem('staffID');
+          navigation.navigate('Login');
+        },
+      },
+    ]);
+  };
+
   return (
     <>
       {loading ? (
@@ -281,7 +310,9 @@ const Tables = ({route, navigation}) => {
               </TouchableOpacity>
             )}
             {clicked && (
-              <TouchableOpacity style={styles.roundButton}>
+              <TouchableOpacity
+                style={styles.roundButton}
+                onPress={() => logOut()}>
                 <Ionicons
                   size={30}
                   color={'white'}
@@ -609,7 +640,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     height: 55,
-    width: 55,
+    width: 70,
     display: 'flex',
     justifyContent: 'center',
     gap: 8,
