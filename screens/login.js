@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -14,6 +14,14 @@ import {
 const Login = ({navigation}) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    const refesh = navigation.addListener('focus', () => {
+      setUsername('');
+      setPassword('');
+    });
+    return refesh;
+  }, []);
 
   const handleLogIn = async () => {
     await axios
@@ -32,7 +40,6 @@ const Login = ({navigation}) => {
             'Authorization'
           ] = `Bearer ${res.data.access_token}`;
           navigation.navigate('Tables');
-          
         }
       })
       .catch(err => {

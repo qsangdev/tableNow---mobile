@@ -74,7 +74,7 @@ const Invoice = ({navigation, route}) => {
   }, []);
 
   const handlePay = async () => {
-    // setLoading(true);
+    setLoading(true);
     await axios
       .post('http://10.0.2.2:3001/api/bill/create', {
         tableID: tableID,

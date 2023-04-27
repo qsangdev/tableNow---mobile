@@ -155,6 +155,7 @@ const Booking = ({route, navigation}) => {
       await axios
         .post('http://10.0.2.2:3001/api/order/create', {
           restaurantID: item.restaurantID,
+          tableID: tableId,
           guestName: name,
           guestPhone: number,
           dateOrder: moment(date).format('DD/MM/YYYY'),
@@ -168,9 +169,18 @@ const Booking = ({route, navigation}) => {
           if (res.data.status === 'ERR') {
             return alert(res.data.message);
           } else {
-            await axios.post('http://10.0.2.2:3001/api/order-menu/create', {
-              orderID: res.data.data._id,
-            });
+            await axios
+              .post('http://10.0.2.2:3001/api/order-menu/create', {
+                orderID: res.data.data._id,
+              })
+              .then(async res => {
+                await axios.put(
+                  `http://10.0.2.2:3001/api/order/update/${res.data.data.orderID}`,
+                  {
+                    orderMenuID: res.data.data._id,
+                  },
+                );
+              });
             await axios
               .post(
                 `http://10.0.2.2:3001/api/table/update-status/${item.restaurantID}`,
@@ -185,13 +195,7 @@ const Booking = ({route, navigation}) => {
                 },
               )
               .then(async res => {
-                await AsyncStorage.setItem(
-                  'user',
-                  JSON.stringify({
-                    userName: name,
-                    userPhone: number,
-                  }),
-                );
+                await saveInfo(name, number);
                 setLoading(false);
                 alert(res.data.message);
                 navigation.navigate('Home');
@@ -203,15 +207,28 @@ const Booking = ({route, navigation}) => {
     }
   };
 
+  const saveInfo = async (name, number) => {
+    try {
+      const data = JSON.parse(await AsyncStorage.getItem('users')) || [];
+      if ((name, number)) {
+        const newUser = {userName: name, userPhone: number};
+        data.push(newUser);
+        await AsyncStorage.setItem('users', JSON.stringify(data));
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   const autoFillLastInfo = async () => {
     try {
-      const data = await AsyncStorage.getItem('user');
+      const data = await AsyncStorage.getItem('users');
       if (!data || data.length === 0) {
         return;
       } else {
         const user = JSON.parse(data);
-        setName(user.userName);
-        setNumber(user.userPhone);
+        setName(user[user.length - 1].userName);
+        setNumber(user[user.length - 1].userPhone);
       }
     } catch (e) {
       console.log(e);
