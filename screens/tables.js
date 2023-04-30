@@ -40,7 +40,6 @@ const Tables = ({route, navigation}) => {
   const [loading, setLoading] = useState(false);
 
   const [clicked, setClicked] = useState(false);
-  const [openBooked, setOpenBooked] = useState(false);
   const [openGuest, setOpenGuest] = useState(false);
   const [openMenu, setOpenMenu] = useState(false);
   const [tableName, setTableName] = useState('');
@@ -49,7 +48,6 @@ const Tables = ({route, navigation}) => {
 
   const [orderID, setOrderID] = useState('');
   const [addDish, setAddDish] = useState([]);
-  const [orderMenuID, setOrderMenuID] = useState('');
 
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
@@ -177,6 +175,7 @@ const Tables = ({route, navigation}) => {
           } else {
             await axios
               .post('http://10.0.2.2:3001/api/order-menu/create', {
+                restaurantID: dataTimes.restaurantID,
                 orderID: res.data.data._id,
               })
               .then(async res => {
@@ -233,9 +232,9 @@ const Tables = ({route, navigation}) => {
       await axios
         .post(`http://10.0.2.2:3001/api/order-menu/update/${orderID}`, {
           ordered: addDish,
+          done: false,
         })
         .then(res => {
-          setOrderMenuID(res.data.data._id);
           setOpenMenu(false);
           setAddDish([]);
         })
@@ -342,9 +341,7 @@ const Tables = ({route, navigation}) => {
                   );
                 })}
               </View>
-              <TouchableOpacity
-                style={styles.tableAvaiText}
-                onPress={() => setOpenBooked(!openBooked)}>
+              <TouchableOpacity style={styles.tableAvaiText}>
                 <Ionicons size={30} name="restaurant-outline"></Ionicons>
                 <Text style={styles.tableName}>Reserved: </Text>
                 <Text style={styles.tableName}>
@@ -473,7 +470,6 @@ const Tables = ({route, navigation}) => {
                         tableName: tableName,
                         tableID: selectedTableIndex,
                         dataMenu: dataMenu,
-                        orderMenuID: orderMenuID,
                       });
                     }}>
                     <Ionicons
@@ -531,19 +527,6 @@ const Tables = ({route, navigation}) => {
                   </TouchableOpacity>
                 </SafeAreaView>
               </View>
-            </View>
-          </Modal>
-          <Modal animationType="slide" transparent={true} visible={openBooked}>
-            <View style={styles.modalContainer}>
-              <SafeAreaView style={styles.modalHeader}>
-                <Text style={styles.modalText}>Booked List</Text>
-                <TouchableOpacity onPress={() => setOpenBooked(!openBooked)}>
-                  <Ionicons
-                    size={30}
-                    color="maroon"
-                    name="close-circle"></Ionicons>
-                </TouchableOpacity>
-              </SafeAreaView>
             </View>
           </Modal>
         </View>

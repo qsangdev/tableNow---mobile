@@ -115,19 +115,19 @@ const Booking = ({route, navigation}) => {
 
   const onComfirmPress = () => {
     if (name === '') {
-      return alert('Please enter your name');
+      return Alert.alert('Warning', 'Please enter your name');
     } else if (number === '') {
-      return alert('Please enter your number..');
+      return Alert.alert('Warning', 'Please enter your number..');
     } else if (people === 0) {
-      return alert('Please choose number of people..');
+      return Alert.alert('Warning', 'Please choose number of people..');
     } else if (chooseId === 0) {
-      return alert('Please choose your table!');
+      return Alert.alert('Warning', 'Please choose your table!');
     } else if (checkTime === false) {
-      return alert('The reservation time has passed');
+      return Alert.alert('Warning', 'The reservation time has passed');
     } else if (number.match(/(84|0[3|5|7|8|9])+([0-9]{8})\b/g)) {
       return setModalVisible(!modalVisible);
     } else {
-      alert('Phone number is not in the correct format!');
+      Alert.alert('Warning', 'Phone number is not in the correct format!');
     }
   };
 
@@ -171,6 +171,7 @@ const Booking = ({route, navigation}) => {
           } else {
             await axios
               .post('http://10.0.2.2:3001/api/order-menu/create', {
+                restaurantID: item.restaurantID,
                 orderID: res.data.data._id,
               })
               .then(async res => {
@@ -197,7 +198,10 @@ const Booking = ({route, navigation}) => {
               .then(async res => {
                 await saveInfo(name, number);
                 setLoading(false);
-                alert(res.data.message);
+                Alert.alert(
+                  res.data.message,
+                  'You have made a successful reservation!',
+                );
                 navigation.navigate('Home');
               });
           }
