@@ -21,7 +21,9 @@ const Profile = ({navigation, route}) => {
           <Image
             style={styles.avatar}
             source={{
-              uri: staff.staffPhoto,
+              uri: !staff.staffPhoto
+                ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png'
+                : staff.staffPhoto,
             }}
           />
 

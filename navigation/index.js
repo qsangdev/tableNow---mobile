@@ -15,11 +15,11 @@ const Stack = createNativeStackNavigator();
 function MyStack() {
   return (
     <Stack.Navigator>
-      {/* <Stack.Screen
+      <Stack.Screen
         name="Hello"
         component={Hello}
         options={{headerShown: false}}
-      /> */}
+      />
       <Stack.Screen
         name="Welcome"
         component={Welcome}

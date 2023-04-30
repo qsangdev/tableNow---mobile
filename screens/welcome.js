@@ -7,11 +7,13 @@ import {
   BackHandler,
   Alert,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useState} from 'react';
 import RNExitApp from 'react-native-exit-app';
 import {useFocusEffect} from '@react-navigation/native';
 
 const Welcome = ({navigation}) => {
+  const [showButton, setShowButton] = useState(false);
+
   useFocusEffect(
     React.useCallback(() => {
       const backAction = () => {
@@ -37,20 +39,25 @@ const Welcome = ({navigation}) => {
       source={require('../assets/welcome.png')}>
       <View style={styles.background} />
       <View style={styles.welcome}>
-        <TouchableOpacity
-          style={styles.logInButton}
-          onPress={() => {
-            navigation.navigate('Login');
-          }}>
-          <Text style={styles.logInText}>Staff Log In</Text>
-        </TouchableOpacity>
+        {showButton ? (
+          <TouchableOpacity
+            style={styles.logInButton}
+            onPress={() => {
+              navigation.navigate('Login');
+            }}>
+            <Text style={styles.logInText}>Staff Log In</Text>
+          </TouchableOpacity>
+        ) : null}
         <View>
-          <Text style={styles.welcomeTitle}>
-            Let your favourite food find you
-          </Text>
-          <Text style={styles.welcomeDescription}>
-            Classy taste is only for those who are qualified to enjoy
-          </Text>
+          <TouchableOpacity onLongPress={() => setShowButton(true)}>
+            <Text style={styles.welcomeTitle}>
+              Let your favourite food find you
+            </Text>
+            <Text style={styles.welcomeDescription}>
+              Classy taste is only for those who are qualified to enjoy
+            </Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.welcomeButton}
             onPress={() => {

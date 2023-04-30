@@ -87,7 +87,7 @@ const Rating = ({route, navigation}) => {
       </TouchableOpacity>
       <Image style={styles.logo} source={require('../assets/logo.png')}></Image>
       <View style={styles.rateContainer}>
-        <Text style={styles.textStyle}>Rate your restaurant</Text>
+        <Text style={styles.textStyle}>Rate this restaurant</Text>
         <Text style={styles.emoji}>
           {defaultRating == 1 ? (
             <>
@@ -117,6 +117,7 @@ const Rating = ({route, navigation}) => {
       </View>
       <View style={styles.comment}>
         <TextInput
+          maxLength={100}
           style={{padding: 0}}
           multiline
           numberOfLines={4}

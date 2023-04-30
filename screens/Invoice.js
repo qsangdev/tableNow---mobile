@@ -17,11 +17,11 @@ const Invoice = ({navigation, route}) => {
   const [loading, setLoading] = useState(false);
   const [dataOrderMenu, setDataOrderMenu] = useState([]);
   const [method, setMethod] = useState('cash');
+  const [orderMenuID, setOrderMenuID] = useState('');
 
   const resID = route.params.resID;
   const staffID = route.params.staffID;
   const orderID = route.params.orderID;
-  const orderMenuID = route.params.orderMenuID;
   const tableName = route.params.tableName;
   const tableID = route.params.tableID;
   const dataMenu = route.params.dataMenu;
@@ -35,6 +35,8 @@ const Invoice = ({navigation, route}) => {
           return alert(res.data.message);
         } else {
           setLoading(false);
+          setOrderMenuID(res.data.data[0]._id);
+          
           const total = res.data.data[0].ordered.reduce((acc, curr) => {
             const index = acc.findIndex(item => item.dishID === curr.dishID);
             if (index !== -1) {
