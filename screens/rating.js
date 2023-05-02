@@ -8,10 +8,12 @@ import {
   TextInput,
   Keyboard,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Rating = ({route, navigation}) => {
   const item = route.params.item;
@@ -20,12 +22,33 @@ const Rating = ({route, navigation}) => {
   const maxRating = [1, 2, 3, 4, 5];
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
+  const [name, setName] = useState('');
+
+  const autoFillLastInfo = async () => {
+    try {
+      const data = await AsyncStorage.getItem('users');
+      if (!data || data.length === 0) {
+        return;
+      } else {
+        const user = JSON.parse(data);
+        setName(user[user.length - 1].userName);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    autoFillLastInfo();
+  }, []);
+
+  console.log(name);
 
   const handleRating = async () => {
     await axios
       .post('http://10.0.2.2:3001/api/rating/create/', {
         restaurantID: item.restaurantID,
-        ratingName: 'example guest',
+        ratingName: name ? name : 'anonymous',
         ratingStar: defaultRating,
         ratingComment: comment,
       })
@@ -46,7 +69,7 @@ const Rating = ({route, navigation}) => {
               .catch(err => console.log(err));
           });
         if (res.data.status === 'OK') {
-          alert(res.data.message);
+          Alert.alert(res.data.message, 'Successful rating!');
           navigation.navigate('Home');
         } else {
           alert(res.data.message);
@@ -117,7 +140,7 @@ const Rating = ({route, navigation}) => {
       </View>
       <View style={styles.comment}>
         <TextInput
-          maxLength={100}
+          maxLength={150}
           style={{padding: 0}}
           multiline
           numberOfLines={4}

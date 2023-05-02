@@ -30,6 +30,9 @@ const Restaurant = ({route, navigation}) => {
   const [dataMenu, setDataMenu] = useState([]);
   const [dataRating, setDataRating] = useState([]);
 
+  const [showCmt, setShowCmt] = useState('');
+  const [showMore, setShowMore] = useState(5);
+
   onchange = nativeEvent => {
     if (nativeEvent) {
       const slide = Math.ceil(
@@ -227,6 +230,73 @@ const Restaurant = ({route, navigation}) => {
                 <View style={styles.loading}>
                   <ActivityIndicator size="large" color="black" />
                 </View>
+              ) : dataRating.length > showMore ? (
+                dataRating
+                  .sort((a, b) => moment(b.createdAt) - moment(a.createdAt))
+                  .slice(0, showMore)
+                  .map(e => {
+                    return (
+                      <View
+                        key={e._id}
+                        style={{
+                          marginTop: 10,
+                          borderWidth: 1,
+                          borderRadius: 10,
+                          padding: 10,
+                        }}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                          }}>
+                          <Text>
+                            {moment(e.createdAt).format('HH:mm DD/MM/YYYY')}
+                          </Text>
+
+                          <View style={{flexDirection: 'row'}}>
+                            {[...Array(e.ratingStar)].map((e, i) => {
+                              return (
+                                <Ionicons
+                                  key={i}
+                                  name="star"
+                                  color="gold"
+                                  size={20}
+                                />
+                              );
+                            })}
+                          </View>
+                        </View>
+
+                        <Text style={styles.guestName}>{e.ratingName}: </Text>
+                        {e.ratingComment.length > 52 ? (
+                          <>
+                            <Text style={styles.addressText}>
+                              {e.ratingComment.slice(0, 52)}
+                            </Text>
+                            <TouchableOpacity onPress={() => setShowCmt(e._id)}>
+                              {showCmt === e._id ? (
+                                <>
+                                  <Text style={styles.addressText}>
+                                    {e.ratingComment.slice(52)}
+                                  </Text>
+                                  <TouchableOpacity
+                                    onPress={() => setShowCmt('')}>
+                                    <Text>.. see less</Text>
+                                  </TouchableOpacity>
+                                </>
+                              ) : (
+                                <Text>.. see more</Text>
+                              )}
+                            </TouchableOpacity>
+                          </>
+                        ) : (
+                          <Text style={styles.addressText}>
+                            {e.ratingComment}
+                          </Text>
+                        )}
+                      </View>
+                    );
+                  })
               ) : (
                 dataRating
                   .sort((a, b) => moment(b.createdAt) - moment(a.createdAt))
@@ -245,9 +315,10 @@ const Restaurant = ({route, navigation}) => {
                             flexDirection: 'row',
                             justifyContent: 'space-between',
                           }}>
-                          <Text style={styles.addressText}>
-                            {e.ratingName}:
+                          <Text>
+                            {moment(e.createdAt).format('HH:mm DD/MM/YYYY')}
                           </Text>
+
                           <View style={{flexDirection: 'row'}}>
                             {[...Array(e.ratingStar)].map((e, i) => {
                               return (
@@ -261,21 +332,51 @@ const Restaurant = ({route, navigation}) => {
                             })}
                           </View>
                         </View>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                          }}>
+
+                        <Text style={styles.guestName}>{e.ratingName}: </Text>
+                        {e.ratingComment.length > 52 ? (
+                          <>
+                            <Text style={styles.addressText}>
+                              {e.ratingComment.slice(0, 52)}
+                            </Text>
+                            <TouchableOpacity onPress={() => setShowCmt(e._id)}>
+                              {showCmt === e._id ? (
+                                <>
+                                  <Text style={styles.addressText}>
+                                    {e.ratingComment.slice(52)}
+                                  </Text>
+                                  <TouchableOpacity
+                                    onPress={() => setShowCmt('')}>
+                                    <Text>.. see less</Text>
+                                  </TouchableOpacity>
+                                </>
+                              ) : (
+                                <Text>.. see more</Text>
+                              )}
+                            </TouchableOpacity>
+                          </>
+                        ) : (
                           <Text style={styles.addressText}>
-                            "{e.ratingComment}"
+                            {e.ratingComment}
                           </Text>
-                          <Text>
-                            {moment(e.createdAt).format('HH:mm DD/MM/YYYY')}
-                          </Text>
-                        </View>
+                        )}
                       </View>
                     );
                   })
+              )}
+              {dataRating.length > 5 && (
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    justifyContent: 'flex-end',
+                    marginTop: 5,
+                  }}
+                  onPress={() => setShowMore(showMore * 2)}>
+                  <Ionicons
+                    size={33}
+                    name="arrow-down-circle-outline"></Ionicons>
+                </TouchableOpacity>
               )}
             </View>
           </View>
@@ -474,6 +575,10 @@ const styles = StyleSheet.create({
   },
   addressText: {
     fontWeight: '800',
+  },
+  guestName: {
+    fontWeight: '800',
+    color: 'black',
   },
   dishDiscount: {
     position: 'absolute',

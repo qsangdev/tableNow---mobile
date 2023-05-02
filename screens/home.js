@@ -39,7 +39,8 @@ const Home = ({navigation}) => {
   const [openBooked, setOpenBooked] = useState(false);
   const [searchText, setSearchText] = useState('');
 
-  const [sort, setSort] = useState('rating');
+  const [sort, setSort] = useState('');
+  const [show, setShow] = useState('');
 
   ////////////////////// LOCATION ////////////////////
   const requestLocationPermission = async () => {
@@ -189,7 +190,8 @@ const Home = ({navigation}) => {
               tables: [
                 {
                   _id: tableID,
-                  status: 'available',
+                  dateOrder: 'empty',
+                  timeOrder: 'empty',
                 },
               ],
             })
@@ -270,10 +272,10 @@ const Home = ({navigation}) => {
         if (
           moment().isAfter(
             moment(
-              `${e.dateOrder.slice(0, 5)} ${e.timeOrder.slice(0, 6)}`,
+              `${e.dateOrder.slice(0, 5)} ${e.timeOrder.slice(8)}`,
               'DD/MM HH:mm',
             )
-              .add(30, 'minutes')
+              .subtract(30, 'minutes')
               .toDate(),
           ) === true
         ) {
@@ -295,7 +297,8 @@ const Home = ({navigation}) => {
                       tables: [
                         {
                           _id: e.tableID,
-                          status: 'available',
+                          dateOrder: 'empty',
+                          timeOrder: 'empty',
                         },
                       ],
                     },
@@ -347,14 +350,14 @@ const Home = ({navigation}) => {
                   <TouchableOpacity
                     onPress={dataOrder && handleCancelAllOrders}>
                     <Ionicons
-                      size={30}
+                      size={35}
                       color="maroon"
                       name="trash-sharp"></Ionicons>
                   </TouchableOpacity>
                   <Text style={styles.modalText}>Reservation List</Text>
                   <TouchableOpacity onPress={() => setOpenBooked(!openBooked)}>
                     <Ionicons
-                      size={30}
+                      size={35}
                       color="maroon"
                       name="close-circle"></Ionicons>
                   </TouchableOpacity>
@@ -368,96 +371,173 @@ const Home = ({navigation}) => {
                     dataOrder.map(e => {
                       return (
                         <View style={styles.bookedItem} key={e._id}>
-                          <View style={styles.infoContainer}>
-                            <View style={styles.info}>
-                              <Ionicons
-                                color="maroon"
-                                size={25}
-                                name="restaurant-outline"></Ionicons>
-                              <Text style={styles.infoText}>
-                                {DATA.filter(
-                                  i => i.restaurantID === e.restaurantID,
-                                ).map(i => {
-                                  return i.restaurantName;
-                                })}
-                              </Text>
-                            </View>
-                            <View style={styles.info}>
-                              <Ionicons
-                                color="maroon"
-                                size={25}
-                                name="location-outline"></Ionicons>
-                              <Text style={styles.infoText}>
-                                {DATA.filter(
-                                  i => i.restaurantID === e.restaurantID,
-                                ).map(i => {
-                                  return i.restaurantAddress;
-                                })}
-                              </Text>
-                            </View>
-                            <View style={styles.info}>
-                              <Ionicons
-                                color="maroon"
-                                size={25}
-                                name="calendar-outline"></Ionicons>
-                              <Text style={styles.infoText}>{e.dateOrder}</Text>
-                            </View>
-                            <View style={styles.info}>
-                              <Ionicons
-                                color="maroon"
-                                size={25}
-                                name="time-outline"></Ionicons>
-                              <Text style={styles.infoText}>{e.timeOrder}</Text>
-                            </View>
-                            <View style={styles.info}>
-                              <Ionicons
-                                color="maroon"
-                                size={25}
-                                name="grid-outline"></Ionicons>
-                              <Text style={styles.infoText}>{e.tableName}</Text>
-                            </View>
-                            <View style={styles.info}>
-                              <Ionicons
-                                color="maroon"
-                                size={25}
-                                name="people-outline"></Ionicons>
-                              <Text style={styles.infoText}>
-                                {e.numberOfPeople}
-                              </Text>
-                            </View>
-                            <View style={styles.info}>
-                              <Ionicons
-                                color="maroon"
-                                size={25}
-                                name="person-circle-outline"></Ionicons>
-                              <Text style={styles.infoText}>{e.guestName}</Text>
-                            </View>
-                            <View style={styles.itemsHeader}>
+                          {show !== e._id ? (
+                            <View>
+                              <View style={styles.itemsHeader}>
+                                <View style={styles.info}>
+                                  <Ionicons
+                                    color="maroon"
+                                    size={25}
+                                    name="restaurant-outline"></Ionicons>
+                                  <Text style={styles.infoText}>
+                                    {DATA.filter(
+                                      i => i.restaurantID === e.restaurantID,
+                                    ).map(i => {
+                                      return i.restaurantName;
+                                    })}
+                                  </Text>
+                                </View>
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    handleCancelOrder(
+                                      e._id,
+                                      e.tableID,
+                                      e.restaurantID,
+                                      e.orderMenuID,
+                                    )
+                                  }>
+                                  <Ionicons
+                                    color="maroon"
+                                    size={25}
+                                    name="trash-outline"></Ionicons>
+                                </TouchableOpacity>
+                              </View>
                               <View style={styles.info}>
                                 <Ionicons
                                   color="maroon"
                                   size={25}
-                                  name="call-outline"></Ionicons>
+                                  name="calendar-outline"></Ionicons>
                                 <Text style={styles.infoText}>
-                                  {e.guestPhone}
+                                  {e.dateOrder}
                                 </Text>
                               </View>
-                              <TouchableOpacity
-                                onPress={() =>
-                                  handleCancelOrder(
-                                    e._id,
-                                    e.tableID,
-                                    e.restaurantID,
-                                    e.orderMenuID,
-                                  )
-                                }>
+                              <View style={styles.itemsHeader}>
+                                <View style={styles.info}>
+                                  <Ionicons
+                                    color="maroon"
+                                    size={25}
+                                    name="time-outline"></Ionicons>
+                                  <Text style={styles.infoText}>
+                                    {e.timeOrder}
+                                  </Text>
+                                </View>
+                                <TouchableOpacity
+                                  onPress={() => setShow(e._id)}>
+                                  <Ionicons
+                                    color="maroon"
+                                    size={25}
+                                    name="arrow-down-circle-outline"></Ionicons>
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          ) : (
+                            <View>
+                              <View style={styles.itemsHeader}>
+                                <View style={styles.info}>
+                                  <Ionicons
+                                    color="maroon"
+                                    size={25}
+                                    name="restaurant-outline"></Ionicons>
+                                  <Text style={styles.infoText}>
+                                    {DATA.filter(
+                                      i => i.restaurantID === e.restaurantID,
+                                    ).map(i => {
+                                      return i.restaurantName;
+                                    })}
+                                  </Text>
+                                </View>
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    handleCancelOrder(
+                                      e._id,
+                                      e.tableID,
+                                      e.restaurantID,
+                                      e.orderMenuID,
+                                    )
+                                  }>
+                                  <Ionicons
+                                    color="maroon"
+                                    size={25}
+                                    name="trash-outline"></Ionicons>
+                                </TouchableOpacity>
+                              </View>
+                              <View style={styles.info}>
                                 <Ionicons
                                   color="maroon"
                                   size={25}
-                                  name="trash-outline"></Ionicons>
-                              </TouchableOpacity>
+                                  name="location-outline"></Ionicons>
+                                <Text style={styles.infoText}>
+                                  {DATA.filter(
+                                    i => i.restaurantID === e.restaurantID,
+                                  ).map(i => {
+                                    return i.restaurantAddress;
+                                  })}
+                                </Text>
+                              </View>
+                              <View style={styles.info}>
+                                <Ionicons
+                                  color="maroon"
+                                  size={25}
+                                  name="calendar-outline"></Ionicons>
+                                <Text style={styles.infoText}>
+                                  {e.dateOrder}
+                                </Text>
+                              </View>
+                              <View style={styles.info}>
+                                <Ionicons
+                                  color="maroon"
+                                  size={25}
+                                  name="time-outline"></Ionicons>
+                                <Text style={styles.infoText}>
+                                  {e.timeOrder}
+                                </Text>
+                              </View>
+                              <View style={styles.info}>
+                                <Ionicons
+                                  color="maroon"
+                                  size={25}
+                                  name="grid-outline"></Ionicons>
+                                <Text style={styles.infoText}>
+                                  {e.tableName}
+                                </Text>
+                              </View>
+                              <View style={styles.info}>
+                                <Ionicons
+                                  color="maroon"
+                                  size={25}
+                                  name="people-outline"></Ionicons>
+                                <Text style={styles.infoText}>
+                                  {e.numberOfPeople}
+                                </Text>
+                              </View>
+                              <View style={styles.info}>
+                                <Ionicons
+                                  color="maroon"
+                                  size={25}
+                                  name="person-circle-outline"></Ionicons>
+                                <Text style={styles.infoText}>
+                                  {e.guestName}
+                                </Text>
+                              </View>
+                              <View style={styles.itemsHeader}>
+                                <View style={styles.info}>
+                                  <Ionicons
+                                    color="maroon"
+                                    size={25}
+                                    name="call-outline"></Ionicons>
+                                  <Text style={styles.infoText}>
+                                    {e.guestPhone}
+                                  </Text>
+                                </View>
+                                <TouchableOpacity onPress={() => setShow('')}>
+                                  <Ionicons
+                                    color="maroon"
+                                    size={25}
+                                    name="arrow-up-circle-outline"></Ionicons>
+                                </TouchableOpacity>
+                              </View>
                             </View>
-                          </View>
+                          )}
                         </View>
                       );
                     })

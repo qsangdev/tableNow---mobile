@@ -14,6 +14,7 @@ import {
   Image,
   Keyboard,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -29,13 +30,14 @@ const {height} = Dimensions.get('window');
 
 const IMG_WIDTH = width / 2 - 60;
 
-const Tables = ({route, navigation}) => {
+const Tables = ({navigation}) => {
   const [resID, setResID] = useState('');
   const [staffID, setStaffID] = useState('');
   const [dataTables, setDataTables] = useState([]);
   const [dataStaff, setDataStaff] = useState([]);
   const [dataTimes, setDataTimes] = useState([]);
   const [dataMenu, setDataMenu] = useState([]);
+  // const [dataOrderMenu, setDataOrderMenu] = useState([]);
   const [clickedTime, setClickedTime] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -53,6 +55,16 @@ const Tables = ({route, navigation}) => {
   const [guestPhone, setGuestPhone] = useState('');
   const [guestPeoples, setGuestPeoples] = useState('');
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    getDataTables();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1500);
+  }, [resID]);
+
   const getID = async () => {
     const resID = await AsyncStorage.getItem('resID');
     const staffID = await AsyncStorage.getItem('staffID');
@@ -69,26 +81,6 @@ const Tables = ({route, navigation}) => {
       getDataTables();
     });
     return refesh;
-  }, [resID]);
-
-  const getDataTables = async () => {
-    setLoading(true);
-    resID &&
-      (await axios
-        .get(`http://10.0.2.2:3001/api/table/get-details/${resID}`)
-        .then(res => {
-          if (res.data.status === 'ERR') {
-            return alert(res.data.message);
-          } else {
-            setLoading(false);
-            setDataTables(res.data.data.tables);
-          }
-        })
-        .catch(err => console.log(err)));
-  };
-
-  useEffect(() => {
-    getDataTables();
   }, [resID]);
 
   const getDataStaff = async () => {
@@ -151,6 +143,47 @@ const Tables = ({route, navigation}) => {
     getDataMenu();
   }, [resID]);
 
+  // const getDataOrderMenu = async () => {
+  //   setLoading(true);
+  //   resID &&
+  //     (await axios
+  //       .get(`http://10.0.2.2:3001/api/order-menu/get/${resID}`)
+  //       .then(res => {
+  //         if (res.data.status === 'ERR') {
+  //           return alert(res.data.message);
+  //         } else {
+  //           setLoading(false);
+  //           setDataOrderMenu(res.data.data);
+  //         }
+  //       })
+  //       .catch(err => console.log(err)));
+  // };
+  // useEffect(() => {
+  //   getDataOrderMenu();
+  // }, [resID]);
+
+  const getDataTables = async () => {
+    setLoading(true);
+    resID &&
+      (await axios
+        .get(`http://10.0.2.2:3001/api/table/get-details/${resID}`)
+        .then(res => {
+          if (res.data.status === 'ERR') {
+            return alert(res.data.message);
+          } else {
+            setLoading(false);
+            setDataTables(res.data.data.tables);
+          }
+        })
+        .catch(err => console.log(err)));
+  };
+
+  useEffect(() => {
+    getDataTables();
+  }, [resID]);
+
+  // console.log(dataTables);
+
   const handleSendRequest = async () => {
     if (!guestName || !guestPeoples || !guestPhone) {
       return alert('Do not leave it blank');
@@ -193,7 +226,10 @@ const Tables = ({route, navigation}) => {
                   tables: [
                     {
                       _id: selectedTableIndex,
-                      status: 'unavailable',
+                      dateOrder: moment().format('DD/MM/YYYY'),
+                      timeOrder: `${
+                        dataTimes.shiftTime[clickedTime - 1].timeStart
+                      } - ${dataTimes.shiftTime[clickedTime - 1].timeEnd}`,
                       orderID: res.data.data._id,
                     },
                   ],
@@ -233,6 +269,7 @@ const Tables = ({route, navigation}) => {
         .post(`http://10.0.2.2:3001/api/order-menu/update/${orderID}`, {
           ordered: addDish,
           done: false,
+          deliver: false,
         })
         .then(res => {
           setOpenMenu(false);
@@ -319,7 +356,10 @@ const Tables = ({route, navigation}) => {
               </TouchableOpacity>
             )}
           </View>
-          <ScrollView>
+          <ScrollView
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }>
             <View style={styles.tables}>
               <View style={styles.mealTimes}>
                 {dataTimes?.shiftTime?.map(e => {
@@ -348,7 +388,14 @@ const Tables = ({route, navigation}) => {
                   {
                     dataTables
                       .filter(e => e.shift === clickedTime)
-                      .filter(e => e.status === 'unavailable').length
+                      .filter(
+                        e =>
+                          e.dateOrder === moment(date).format('DD/MM/YYYY') &&
+                          e.timeOrder ===
+                            `${dataTimes[clicked - 1].timeStart} - ${
+                              dataTimes[clicked - 1].timeEnd
+                            }`,
+                      ).length
                   }{' '}
                   / {dataTables.length / 3}
                 </Text>
@@ -361,7 +408,11 @@ const Tables = ({route, navigation}) => {
                       <TouchableOpacity
                         style={styles.table}
                         onPress={
-                          e.status === 'unavailable'
+                          e.dateOrder === moment().format('DD/MM/YYYY') &&
+                          e.timeOrder ===
+                            `${dataTimes[clicked - 1].timeStart} - ${
+                              dataTimes[clicked - 1].timeEnd
+                            }`
                             ? () => {
                                 setOpenMenu(!openMenu);
                                 setTableName(e.name);
@@ -374,7 +425,11 @@ const Tables = ({route, navigation}) => {
                                 setSelectedTableIndex(e._id);
                               }
                         }>
-                        {e.status === 'available' ? (
+                        {e.dateOrder === moment().format('DD/MM/YYYY') &&
+                        e.timeOrder ===
+                          `${dataTimes[clicked - 1].timeStart} - ${
+                            dataTimes[clicked - 1].timeEnd
+                          }` ? (
                           <CheckBox
                             tintColors={'green'}
                             disabled={true}
@@ -495,7 +550,7 @@ const Tables = ({route, navigation}) => {
                             source={{uri: e.dishImage[0]}}
                           />
                           <Text style={styles.menuItem}>{e.dishName}</Text>
-                          <Text>${e.dishPrice}</Text>
+                          <Text style={styles.itemText}>${e.dishPrice}</Text>
                           <NumericInput
                             type="plus-minus"
                             minValue={0}
@@ -670,9 +725,10 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: 14,
-    color: 'black',
+    color: 'green',
     fontWeight: '700',
     textAlignVertical: 'center',
+    marginVertical: 5,
   },
   menuContainer: {
     marginBottom: 10,
@@ -698,6 +754,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'gray',
     textAlign: 'center',
+    color: 'black',
   },
   menuText: {
     fontSize: 20,

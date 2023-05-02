@@ -12,7 +12,6 @@ import {
   Modal,
   Alert,
   Image,
-  Keyboard,
   ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
@@ -23,7 +22,6 @@ import moment from 'moment';
 import CheckBox from '@react-native-community/checkbox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-get-random-values';
-import {v4 as uuidv4} from 'uuid';
 import axios from 'axios';
 
 const {width} = Dimensions.get('window');
@@ -110,7 +108,6 @@ const Booking = ({route, navigation}) => {
   const handleClick = id => {
     checkRealTime();
     setClicked(id);
-    // setPeople(0);
   };
 
   const onComfirmPress = () => {
@@ -134,10 +131,12 @@ const Booking = ({route, navigation}) => {
   const checkRealTime = () => {
     if (dataTime.length > 0) {
       const eatTime = moment(
-        moment(date).format('DD/MM') + ' ' + dataTime[clicked - 1].timeStart,
+        moment(date).format('DD/MM') + ' ' + dataTime[clicked - 1].timeEnd,
         'DD/MM HH:mm',
-      );
-      if (eatTime.isBefore(moment())) {
+      )
+        .subtract(30, 'minutes')
+        .toDate();
+      if (moment().isAfter(eatTime)) {
         setCheckTime(false);
       } else {
         setCheckTime(true);
@@ -189,7 +188,10 @@ const Booking = ({route, navigation}) => {
                   tables: [
                     {
                       _id: tableId,
-                      status: 'unavailable',
+                      timeOrder: `${dataTime[clicked - 1].timeStart} - ${
+                        dataTime[clicked - 1].timeEnd
+                      }`,
+                      dateOrder: moment(date).format('DD/MM/YYYY'),
                       orderID: res.data.data._id,
                     },
                   ],
@@ -297,10 +299,14 @@ const Booking = ({route, navigation}) => {
                       name="calendar-outline"></Ionicons>{' '}
                     Date: {moment(date).format('DD/MM/YYYY')}
                   </Text>
-                  {moment(
-                    moment(date).format('DD/MM') + ' ' + dataTime[2].timeStart,
-                    'DD/MM HH:mm',
-                  ).isBefore(moment()) ? (
+                  {moment().isAfter(
+                    moment(
+                      moment(date).format('DD/MM') + ' ' + dataTime[2].timeEnd,
+                      'DD/MM HH:mm',
+                    )
+                      .subtract(30, 'minutes')
+                      .toDate(),
+                  ) ? (
                     <Text style={{marginBottom: 5, color: 'red'}}>
                       Today's reservation time has passed, please select the
                       next date !
@@ -363,6 +369,10 @@ const Booking = ({route, navigation}) => {
                       name="time-outline"></Ionicons>{' '}
                     Meal times
                   </Text>
+                  <Text style={{color: 'teal'}}>
+                    The maximum time that can be booked is 30 minutes before the
+                    end of the shift.
+                  </Text>
                   <View style={styles.mealTimes}>
                     {dataTime.map(e => {
                       return (
@@ -394,7 +404,15 @@ const Booking = ({route, navigation}) => {
                         {
                           dataTables.tables
                             .filter(e => e.shift === clicked)
-                            .filter(e => e.status === 'unavailable').length
+                            .filter(
+                              e =>
+                                e.dateOrder ===
+                                  moment(date).format('DD/MM/YYYY') &&
+                                e.timeOrder ===
+                                  `${dataTime[clicked - 1].timeStart} - ${
+                                    dataTime[clicked - 1].timeEnd
+                                  }`,
+                            ).length
                         }{' '}
                         / {dataTables.tables.length / 3}
                       </Text>
@@ -411,14 +429,24 @@ const Booking = ({route, navigation}) => {
                               onPress={() => handleChoose(e.name, e._id)}
                               style={styles.table}
                               key={e._id}>
-                              {e.status === 'unavailable' ? (
+                              {e.dateOrder ===
+                                moment(date).format('DD/MM/YYYY') &&
+                              e.timeOrder ===
+                                `${dataTime[clicked - 1].timeStart} - ${
+                                  dataTime[clicked - 1].timeEnd
+                                }` ? (
                                 <>
-                                  <CheckBox disabled={true} value={true} />
+                                  <CheckBox
+                                    style={{alignSelf: 'center'}}
+                                    disabled={true}
+                                    value={true}
+                                  />
                                   <Text style={styles.tableName}>{e.name}</Text>
                                 </>
                               ) : (
                                 <>
                                   <CheckBox
+                                    style={{alignSelf: 'center'}}
                                     disabled={false}
                                     value={chooseId === e.name}
                                     onChange={() => handleChoose(e.name, e._id)}
@@ -600,6 +628,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'silver',
     borderRadius: 5,
     backgroundColor: 'gray',
+    paddingHorizontal: 10,
   },
   buttonText: {
     fontWeight: '800',
@@ -611,6 +640,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 5,
     backgroundColor: 'black',
+    paddingHorizontal: 10,
   },
   peopleContainer: {
     flexDirection: 'row',
@@ -659,15 +689,16 @@ const styles = StyleSheet.create({
     margin: 5,
     borderWidth: 1,
     borderRadius: 5,
+    width: 69,
   },
   tableName: {
-    alignSelf: 'center',
+    textAlign: 'center',
     fontWeight: '800',
   },
   tableNameAvai: {
-    alignSelf: 'center',
     fontWeight: '800',
     color: 'teal',
+    textAlign: 'center',
   },
   buttonContainer: {
     paddingHorizontal: 20,
