@@ -36,7 +36,7 @@ const Invoice = ({navigation, route}) => {
         } else {
           setLoading(false);
           setOrderMenuID(res.data.data[0]._id);
-          
+
           const total = res.data.data[0].ordered.reduce((acc, curr) => {
             const index = acc.findIndex(item => item.dishID === curr.dishID);
             if (index !== -1) {
@@ -61,7 +61,7 @@ const Invoice = ({navigation, route}) => {
             return {
               ...e,
               total:
-                (e.dishPrice - (e.dishDiscount * 100) / e.dishPrice) *
+                (e.dishPrice - (e.dishDiscount / 100) * e.dishPrice) *
                 e.quantity,
             };
           });
@@ -101,7 +101,8 @@ const Invoice = ({navigation, route}) => {
             tables: [
               {
                 _id: tableID,
-                status: 'available',
+                dateOrder: 'empty',
+                timeOrder: 'empty',
               },
             ],
           })
@@ -111,6 +112,32 @@ const Invoice = ({navigation, route}) => {
           });
       })
       .catch(err => console.log(err));
+  };
+
+  const handleRemove = id => {
+    Alert.alert('Are you sure?', 'Remove this dish off the bill', [
+      {
+        text: 'Cancel',
+        onPress: () => console.log('Cancel Pressed'),
+        style: 'cancel',
+      },
+      {
+        text: 'OK',
+        onPress: async () =>
+          await axios
+            .post(
+              `http://10.0.2.2:3001/api/order-menu/delete-dish/${orderID}`,
+              {
+                ordered: [
+                  {
+                    dishID: id,
+                  },
+                ],
+              },
+            )
+            .then(() => getDataOrderMenu()),
+      },
+    ]);
   };
 
   return (
@@ -126,11 +153,19 @@ const Invoice = ({navigation, route}) => {
               <View style={styles.invoiceHeader}>
                 <TouchableOpacity onPress={() => navigation.navigate('Tables')}>
                   <Ionicons
-                    size={35}
+                    size={40}
                     color="maroon"
                     name="arrow-back-circle-outline"></Ionicons>
                 </TouchableOpacity>
-                <Text style={styles.invoiceTitle}>{tableName}</Text>
+                <Text
+                  style={{
+                    textAlignVertical: 'center',
+                    fontWeight: '700',
+                    fontSize: 20,
+                    color: 'black',
+                  }}>
+                  {tableName}
+                </Text>
                 <TouchableOpacity
                   onPress={() =>
                     Alert.alert(
@@ -147,9 +182,9 @@ const Invoice = ({navigation, route}) => {
                     )
                   }>
                   <Ionicons
-                    size={35}
+                    size={40}
                     color="maroon"
-                    name="checkmark-done-circle-outline"></Ionicons>
+                    name="checkmark-done-circle"></Ionicons>
                 </TouchableOpacity>
               </View>
               <FlatList
@@ -158,14 +193,43 @@ const Invoice = ({navigation, route}) => {
                   return (
                     <View style={styles.invoiceItem}>
                       <Text style={styles.invoiceTitle}>{item.dishName}</Text>
-                      <Text style={styles.invoicePrice}>${item.dishPrice}</Text>
-                      <Text style={styles.invoicePrice}>
-                        -{item.dishDiscount}%
-                      </Text>
-                      <Text style={styles.invoiceQuantity}>
-                        x{item.quantity}
-                      </Text>
-                      <Text style={styles.totalText}>${item.total}</Text>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                        }}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            width: '80%',
+                          }}>
+                          <Text style={styles.invoicePrice}>
+                            ${item.dishPrice}
+                          </Text>
+                          <Text style={styles.invoicePrice}>
+                            -{item.dishDiscount}%
+                          </Text>
+                          <Text style={styles.invoiceQuantity}>
+                            x{item.quantity}
+                          </Text>
+                          <Text style={styles.totalText}>${item.total}</Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => handleRemove(item.dishID)}
+                        style={{
+                          position: 'absolute',
+                          right: 5,
+                          bottom: 20,
+                          zIndex: 1,
+                        }}>
+                        <Ionicons
+                          size={30}
+                          name="remove-circle-outline"
+                          style={{color: 'maroon', fontWeight: '800'}}
+                        />
+                      </TouchableOpacity>
                     </View>
                   );
                 }}
@@ -225,14 +289,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-    textAlign: 'center',
     textAlignVertical: 'center',
+    width: '100%',
   },
   invoiceList: {
     flex: 1,
   },
   invoiceItem: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 10,
@@ -261,7 +324,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     textAlign: 'right',
-    padding: 10,
+    marginRight: 10,
   },
   invoiceFooter: {
     padding: 10,
