@@ -186,12 +186,11 @@ const Home = ({navigation}) => {
             `http://10.0.2.2:3001/api/order-menu/delete/${orderMenuID}`,
           );
           await axios
-            .post(`http://10.0.2.2:3001/api/table/update-status/${resID}`, {
+            .post(`http://10.0.2.2:3001/api/table/delete-status/${resID}`, {
               tables: [
                 {
                   _id: tableID,
-                  dateOrder: 'empty',
-                  timeOrder: 'empty',
+                  orderID: id,
                 },
               ],
             })
@@ -292,13 +291,12 @@ const Home = ({navigation}) => {
                 );
                 await axios
                   .post(
-                    `http://10.0.2.2:3001/api/table/update-status/${e.restaurantID}`,
+                    `http://10.0.2.2:3001/api/table/delete-status/${e.restaurantID}`,
                     {
                       tables: [
                         {
                           _id: e.tableID,
-                          dateOrder: 'empty',
-                          timeOrder: 'empty',
+                          orderID: e._id,
                         },
                       ],
                     },
