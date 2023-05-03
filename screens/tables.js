@@ -37,7 +37,7 @@ const Tables = ({navigation}) => {
   const [dataStaff, setDataStaff] = useState([]);
   const [dataTimes, setDataTimes] = useState([]);
   const [dataMenu, setDataMenu] = useState([]);
-  // const [dataOrderMenu, setDataOrderMenu] = useState([]);
+  const [dataOrderMenu, setDataOrderMenu] = useState([]);
   const [clickedTime, setClickedTime] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -165,6 +165,7 @@ const Tables = ({navigation}) => {
   const getDataTables = async () => {
     setLoading(true);
     resID &&
+      dataOrderMenu &&
       (await axios
         .get(`http://10.0.2.2:3001/api/table/get-details/${resID}`)
         .then(res => {
@@ -173,6 +174,31 @@ const Tables = ({navigation}) => {
           } else {
             setLoading(false);
             setDataTables(res.data.data.tables);
+
+            // const statusTable = dataOrderMenu.filter(i => i.orderID);
+            // const orderTable = res.data.data.tables.filter(e => {
+            //   return e.status.filter(i => i.orderID).length > 0;
+            // });
+
+            // const arr = orderTable
+            //   .filter(e => e.status)
+            //   .map(e => e.status[0])
+            //   .filter(e => e.orderID);
+
+            // const finalArr = arr.map(e => {
+            //   return {
+            //     ...e,
+            //     done: statusTable.filter(i => i.orderID === e.orderID)[0].done,
+            //   };
+            // });
+
+            // const ARR = res.data.data.tables.map(e => {
+            //   return {
+            //     ...e,
+            //     status: finalArr,
+            //   };
+            // });
+            // console.log(ARR[2].status);
           }
         })
         .catch(err => console.log(err)));
@@ -181,8 +207,6 @@ const Tables = ({navigation}) => {
   useEffect(() => {
     getDataTables();
   }, [resID]);
-
-  // console.log(dataTables);
 
   const handleSendRequest = async () => {
     if (!guestName || !guestPeoples || !guestPhone) {
@@ -227,9 +251,6 @@ const Tables = ({navigation}) => {
                     {
                       _id: selectedTableIndex,
                       dateOrder: moment().format('DD/MM/YYYY'),
-                      timeOrder: `${
-                        dataTimes.shiftTime[clickedTime - 1].timeStart
-                      } - ${dataTimes.shiftTime[clickedTime - 1].timeEnd}`,
                       orderID: res.data.data._id,
                     },
                   ],
@@ -268,10 +289,15 @@ const Tables = ({navigation}) => {
       await axios
         .post(`http://10.0.2.2:3001/api/order-menu/update/${orderID}`, {
           ordered: addDish,
-          done: false,
-          deliver: false,
         })
-        .then(res => {
+        .then(async res => {
+          await axios.put(
+            `http://10.0.2.2:3001/api/order-menu/update-status/${res.data.data._id}`,
+            {
+              done: false,
+              deliver: false,
+            },
+          );
           setOpenMenu(false);
           setAddDish([]);
         })
@@ -390,11 +416,9 @@ const Tables = ({navigation}) => {
                       .filter(e => e.shift === clickedTime)
                       .filter(
                         e =>
-                          e.dateOrder === moment(date).format('DD/MM/YYYY') &&
-                          e.timeOrder ===
-                            `${dataTimes[clicked - 1].timeStart} - ${
-                              dataTimes[clicked - 1].timeEnd
-                            }`,
+                          e.status.filter(
+                            e => e.dateOrder === moment().format('DD/MM/YYYY'),
+                          ).length,
                       ).length
                   }{' '}
                   / {dataTables.length / 3}
@@ -408,16 +432,15 @@ const Tables = ({navigation}) => {
                       <TouchableOpacity
                         style={styles.table}
                         onPress={
-                          e.dateOrder === moment().format('DD/MM/YYYY') &&
-                          e.timeOrder ===
-                            `${dataTimes[clicked - 1].timeStart} - ${
-                              dataTimes[clicked - 1].timeEnd
-                            }`
+                          e.status.length > 0 &&
+                          e.status.map(
+                            i => i.dateOrder === moment().format('DD/MM/YYYY'),
+                          )
                             ? () => {
-                                setOpenMenu(!openMenu);
                                 setTableName(e.name);
-                                setOrderID(e.orderID);
+                                setOrderID(e.status[0].orderID);
                                 setSelectedTableIndex(e._id);
+                                setOpenMenu(!openMenu);
                               }
                             : () => {
                                 setOpenGuest(true);
@@ -425,23 +448,21 @@ const Tables = ({navigation}) => {
                                 setSelectedTableIndex(e._id);
                               }
                         }>
-                        {e.dateOrder === moment().format('DD/MM/YYYY') &&
-                        e.timeOrder ===
-                          `${dataTimes[clicked - 1].timeStart} - ${
-                            dataTimes[clicked - 1].timeEnd
-                          }` ? (
+                        {e.status.length > 0 &&
+                        e.status.map(i => i.dateOrder)[0] ===
+                          moment().format('DD/MM/YYYY') ? (
                           <CheckBox
-                            tintColors={'green'}
+                            tintColors={'red'}
                             disabled={true}
-                            value={isSelected}
+                            value={!isSelected}
                             style={styles.checkbox}
                             onValueChange={setSelection}
                           />
                         ) : (
                           <CheckBox
-                            tintColors={'red'}
+                            tintColors={'green'}
                             disabled={true}
-                            value={!isSelected}
+                            value={isSelected}
                             style={styles.checkbox}
                             onValueChange={setSelection}
                           />

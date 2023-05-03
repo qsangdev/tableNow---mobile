@@ -406,12 +406,11 @@ const Booking = ({route, navigation}) => {
                             .filter(e => e.shift === clicked)
                             .filter(
                               e =>
-                                e.dateOrder ===
-                                  moment(date).format('DD/MM/YYYY') &&
-                                e.timeOrder ===
-                                  `${dataTime[clicked - 1].timeStart} - ${
-                                    dataTime[clicked - 1].timeEnd
-                                  }`,
+                                e.status.filter(
+                                  e =>
+                                    e.dateOrder ===
+                                    moment(date).format('DD/MM/YYYY'),
+                                ).length,
                             ).length
                         }{' '}
                         / {dataTables.tables.length / 3}
@@ -429,12 +428,9 @@ const Booking = ({route, navigation}) => {
                               onPress={() => handleChoose(e.name, e._id)}
                               style={styles.table}
                               key={e._id}>
-                              {e.dateOrder ===
-                                moment(date).format('DD/MM/YYYY') &&
-                              e.timeOrder ===
-                                `${dataTime[clicked - 1].timeStart} - ${
-                                  dataTime[clicked - 1].timeEnd
-                                }` ? (
+                              {e.status.length > 0 &&
+                              e.status.map(i => i.dateOrder)[0] ===
+                                moment(date).format('DD/MM/YYYY') ? (
                                 <>
                                   <CheckBox
                                     style={{alignSelf: 'center'}}

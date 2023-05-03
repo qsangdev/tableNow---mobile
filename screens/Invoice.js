@@ -97,12 +97,11 @@ const Invoice = ({navigation, route}) => {
           completed: true,
         });
         await axios
-          .post(`http://10.0.2.2:3001/api/table/update-status/${resID}`, {
+          .post(`http://10.0.2.2:3001/api/table/delete-status/${resID}`, {
             tables: [
               {
                 _id: tableID,
-                dateOrder: 'empty',
-                timeOrder: 'empty',
+                orderID: orderID
               },
             ],
           })
