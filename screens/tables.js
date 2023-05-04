@@ -87,7 +87,7 @@ const Tables = ({navigation}) => {
     setLoading(true);
     staffID &&
       (await axios
-        .get(`http://10.0.2.2:3001/api/staffs/get-details/${staffID}`)
+        .get(`https://tablenow.onrender.com/api/staffs/get-details/${staffID}`)
         .then(res => {
           if (res.data.status === 'ERR') {
             return alert(res.data.message);
@@ -107,7 +107,7 @@ const Tables = ({navigation}) => {
     setLoading(true);
     resID &&
       (await axios
-        .get(`http://10.0.2.2:3001/api/profile/get-details/${resID}`)
+        .get(`https://tablenow.onrender.com/api/profile/get-details/${resID}`)
         .then(res => {
           if (res.data.status === 'ERR') {
             return alert(res.data.message);
@@ -127,7 +127,7 @@ const Tables = ({navigation}) => {
     setLoading(true);
     resID &&
       (await axios
-        .get(`http://10.0.2.2:3001/api/dish/get/${resID}`)
+        .get(`https://tablenow.onrender.com/api/dish/get/${resID}`)
         .then(res => {
           if (res.data.status === 'ERR') {
             return alert(res.data.message);
@@ -147,7 +147,7 @@ const Tables = ({navigation}) => {
   //   setLoading(true);
   //   resID &&
   //     (await axios
-  //       .get(`http://10.0.2.2:3001/api/order-menu/get/${resID}`)
+  //       .get(`https://tablenow.onrender.com/api/order-menu/get/${resID}`)
   //       .then(res => {
   //         if (res.data.status === 'ERR') {
   //           return alert(res.data.message);
@@ -167,7 +167,7 @@ const Tables = ({navigation}) => {
     resID &&
       dataOrderMenu &&
       (await axios
-        .get(`http://10.0.2.2:3001/api/table/get-details/${resID}`)
+        .get(`https://tablenow.onrender.com/api/table/get-details/${resID}`)
         .then(res => {
           if (res.data.status === 'ERR') {
             return alert(res.data.message);
@@ -214,7 +214,7 @@ const Tables = ({navigation}) => {
     } else {
       setLoading(true);
       await axios
-        .post('http://10.0.2.2:3001/api/order/create', {
+        .post('https://tablenow.onrender.com/api/order/create', {
           restaurantID: dataTimes.restaurantID,
           tableID: selectedTableIndex,
           guestName: guestName,
@@ -231,13 +231,13 @@ const Tables = ({navigation}) => {
             return alert(res.data.message);
           } else {
             await axios
-              .post('http://10.0.2.2:3001/api/order-menu/create', {
+              .post('https://tablenow.onrender.com/api/order-menu/create', {
                 restaurantID: dataTimes.restaurantID,
                 orderID: res.data.data._id,
               })
               .then(async res => {
                 await axios.put(
-                  `http://10.0.2.2:3001/api/order/update/${res.data.data.orderID}`,
+                  `https://tablenow.onrender.com/api/order/update/${res.data.data.orderID}`,
                   {
                     orderMenuID: res.data.data._id,
                   },
@@ -245,7 +245,7 @@ const Tables = ({navigation}) => {
               });
             await axios
               .post(
-                `http://10.0.2.2:3001/api/table/update-status/${dataTimes.restaurantID}`,
+                `https://tablenow.onrender.com/api/table/update-status/${dataTimes.restaurantID}`,
                 {
                   tables: [
                     {
@@ -287,12 +287,12 @@ const Tables = ({navigation}) => {
       return alert('You have not selected the dish yet');
     } else {
       await axios
-        .post(`http://10.0.2.2:3001/api/order-menu/update/${orderID}`, {
+        .post(`https://tablenow.onrender.com/api/order-menu/update/${orderID}`, {
           ordered: addDish,
         })
         .then(async res => {
           await axios.put(
-            `http://10.0.2.2:3001/api/order-menu/update-status/${res.data.data._id}`,
+            `https://tablenow.onrender.com/api/order-menu/update-status/${res.data.data._id}`,
             {
               done: false,
               deliver: false,

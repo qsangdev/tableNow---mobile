@@ -29,7 +29,7 @@ const Invoice = ({navigation, route}) => {
   const getDataOrderMenu = async () => {
     setLoading(true);
     await axios
-      .get(`http://10.0.2.2:3001/api/order-menu/get-details/${orderID}`)
+      .get(`https://tablenow.onrender.com/api/order-menu/get-details/${orderID}`)
       .then(res => {
         if (res.data.status === 'ERR') {
           return alert(res.data.message);
@@ -78,7 +78,7 @@ const Invoice = ({navigation, route}) => {
   const handlePay = async () => {
     setLoading(true);
     await axios
-      .post('http://10.0.2.2:3001/api/bill/create', {
+      .post('https://tablenow.onrender.com/api/bill/create', {
         tableID: tableID,
         staffID: staffID,
         restaurantID: resID,
@@ -91,13 +91,13 @@ const Invoice = ({navigation, route}) => {
       })
       .then(async () => {
         await axios.delete(
-          `http://10.0.2.2:3001/api/order-menu/delete/${orderMenuID}`,
+          `https://tablenow.onrender.com/api/order-menu/delete/${orderMenuID}`,
         );
-        await axios.put(`http://10.0.2.2:3001/api/order/update/${orderID}`, {
+        await axios.put(`https://tablenow.onrender.com/api/order/update/${orderID}`, {
           completed: true,
         });
         await axios
-          .post(`http://10.0.2.2:3001/api/table/delete-status/${resID}`, {
+          .post(`https://tablenow.onrender.com/api/table/delete-status/${resID}`, {
             tables: [
               {
                 _id: tableID,
@@ -125,7 +125,7 @@ const Invoice = ({navigation, route}) => {
         onPress: async () =>
           await axios
             .post(
-              `http://10.0.2.2:3001/api/order-menu/delete-dish/${orderID}`,
+              `https://tablenow.onrender.com/api/order-menu/delete-dish/${orderID}`,
               {
                 ordered: [
                   {

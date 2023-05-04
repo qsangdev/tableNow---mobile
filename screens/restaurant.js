@@ -47,7 +47,7 @@ const Restaurant = ({route, navigation}) => {
   const getDataMenu = async () => {
     setLoading(true);
     await axios
-      .get(`http://10.0.2.2:3001/api/dish/get/${item.restaurantID}`)
+      .get(`https://tablenow.onrender.com/api/dish/get/${item.restaurantID}`)
       .then(res => {
         setLoading(false);
         setDataMenu(res.data.data);
@@ -62,7 +62,7 @@ const Restaurant = ({route, navigation}) => {
   const getDataRating = async () => {
     setLoading(true);
     await axios
-      .get(`http://10.0.2.2:3001/api/rating/get-details/${item.restaurantID}`)
+      .get(`https://tablenow.onrender.com/api/rating/get-details/${item.restaurantID}`)
       .then(res => {
         setLoading(false);
         setDataRating(res.data.data);

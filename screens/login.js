@@ -25,7 +25,7 @@ const Login = ({navigation}) => {
 
   const handleLogIn = async () => {
     await axios
-      .post('http://10.0.2.2:3001/api/staffs/log-in', {
+      .post('https://tablenow.onrender.com/api/staffs/log-in', {
         accountName: username,
         accountPassword: password,
       })

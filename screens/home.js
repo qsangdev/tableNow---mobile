@@ -14,6 +14,7 @@ import {
   TextInput,
   FlatList,
   Keyboard,
+  RefreshControl
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -41,6 +42,16 @@ const Home = ({navigation}) => {
 
   const [sort, setSort] = useState('');
   const [show, setShow] = useState('');
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    getDATA();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1500);
+  }, []);
 
   ////////////////////// LOCATION ////////////////////
   const requestLocationPermission = async () => {
@@ -175,7 +186,7 @@ const Home = ({navigation}) => {
 
   const callAPICancelOrder = async (id, tableID, resID, orderMenuID) => {
     await axios
-      .put(`http://10.0.2.2:3001/api/order/update/${id}`, {
+      .put(`https://tablenow.onrender.com/api/order/update/${id}`, {
         cancelled: true,
       })
       .then(async res => {
@@ -183,17 +194,20 @@ const Home = ({navigation}) => {
           return alert(res.data.message);
         } else {
           await axios.delete(
-            `http://10.0.2.2:3001/api/order-menu/delete/${orderMenuID}`,
+            `https://tablenow.onrender.com/api/order-menu/delete/${orderMenuID}`,
           );
           await axios
-            .post(`http://10.0.2.2:3001/api/table/delete-status/${resID}`, {
-              tables: [
-                {
-                  _id: tableID,
-                  orderID: id,
-                },
-              ],
-            })
+            .post(
+              `https://tablenow.onrender.com/api/table/delete-status/${resID}`,
+              {
+                tables: [
+                  {
+                    _id: tableID,
+                    orderID: id,
+                  },
+                ],
+              },
+            )
             .then(() => {
               getUser();
               getDataOrder();
@@ -205,7 +219,7 @@ const Home = ({navigation}) => {
   const getDATA = async () => {
     setLoading(true);
     await axios
-      .get('http://10.0.2.2:3001/api/profile/getAll')
+      .get('https://tablenow.onrender.com/api/profile/getAll')
       .then(res => {
         setLoading(false);
         const restaurants = res.data.data
@@ -239,7 +253,7 @@ const Home = ({navigation}) => {
   const getDataOrder = async () => {
     setLoading(true);
     await axios
-      .get('http://10.0.2.2:3001/api/order/getAll')
+      .get('https://tablenow.onrender.com/api/order/getAll')
       .then(res => {
         if ((userName, userPhone)) {
           setLoading(false);
@@ -279,7 +293,7 @@ const Home = ({navigation}) => {
           ) === true
         ) {
           await axios
-            .put(`http://10.0.2.2:3001/api/order/update/${e._id}`, {
+            .put(`https://tablenow.onrender.com/api/order/update/${e._id}`, {
               cancelled: true,
             })
             .then(async res => {
@@ -287,11 +301,11 @@ const Home = ({navigation}) => {
                 return alert(res.data.message);
               } else {
                 await axios.delete(
-                  `http://10.0.2.2:3001/api/order-menu/delete/${e.orderMenuID}`,
+                  `https://tablenow.onrender.com/api/order-menu/delete/${e.orderMenuID}`,
                 );
                 await axios
                   .post(
-                    `http://10.0.2.2:3001/api/table/delete-status/${e.restaurantID}`,
+                    `https://tablenow.onrender.com/api/table/delete-status/${e.restaurantID}`,
                     {
                       tables: [
                         {
@@ -604,14 +618,17 @@ const Home = ({navigation}) => {
           <Picker
             mode="dropdown"
             selectedValue={sort}
-            onValueChange={(itemValue, itemIndex) => setSort(itemValue)}>
+            onValueChange={(itemValue) => setSort(itemValue)}>
             <Picker.Item label="Sort by Discount" value="discount" />
-            <Picker.Item label="Sort by Rating" value="rating" />
             <Picker.Item label="Sort by Distance" value="distance" />
+            <Picker.Item label="Sort by Rating" value="rating" />
           </Picker>
 
-          {DATA !== '' ? (
+          {DATA.length > 0 && filterRestaurant().length > 0 ? (
             <FlatList
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
               data={
                 sort === 'rating'
                   ? sortByRating() && filterRestaurant()
@@ -619,7 +636,7 @@ const Home = ({navigation}) => {
                   ? sortByDiscount() && filterRestaurant()
                   : sort === 'distance'
                   ? sortByDistance() && filterRestaurant()
-                  : DATA
+                  : DATA && filterRestaurant()
               }
               numColumns={2}
               renderItem={({item, index}) => {
