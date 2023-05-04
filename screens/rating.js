@@ -46,7 +46,7 @@ const Rating = ({route, navigation}) => {
 
   const handleRating = async () => {
     await axios
-      .post('http://10.0.2.2:3001/api/rating/create/', {
+      .post('https://tablenow.onrender.com/api/rating/create/', {
         restaurantID: item.restaurantID,
         ratingName: name ? name : 'anonymous',
         ratingStar: defaultRating,
@@ -56,11 +56,11 @@ const Rating = ({route, navigation}) => {
         setLoading(true);
         await axios
           .get(
-            `http://10.0.2.2:3001/api/rating/get-details/${item.restaurantID}`,
+            `https://tablenow.onrender.com/api/rating/get-details/${item.restaurantID}`,
           )
           .then(async res => {
             await axios
-              .put(`http://10.0.2.2:3001/api/profile/update/${item._id}`, {
+              .put(`https://tablenow.onrender.com/api/profile/update/${item._id}`, {
                 rating:
                   res.data.data.reduce((s, a) => s + a.ratingStar, 0) /
                   res.data.data.length,

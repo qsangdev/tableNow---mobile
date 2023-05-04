@@ -56,7 +56,7 @@ const Booking = ({route, navigation}) => {
   const getDataTables = async () => {
     setLoading(true);
     await axios
-      .get(`http://10.0.2.2:3001/api/table/get-details/${item.restaurantID}`)
+      .get(`https://tablenow.onrender.com/api/table/get-details/${item.restaurantID}`)
       .then(res => {
         setLoading(false);
         setDataTables(res.data.data);
@@ -71,7 +71,7 @@ const Booking = ({route, navigation}) => {
   const getDataTimes = async () => {
     setLoading(true);
     await axios
-      .get(`http://10.0.2.2:3001/api/profile/get-details/${item.restaurantID}`)
+      .get(`https://tablenow.onrender.com/api/profile/get-details/${item.restaurantID}`)
       .then(res => {
         setLoading(false);
         setDataTime(res.data.data.shiftTime);
@@ -152,7 +152,7 @@ const Booking = ({route, navigation}) => {
     try {
       setLoading(true);
       await axios
-        .post('http://10.0.2.2:3001/api/order/create', {
+        .post('https://tablenow.onrender.com/api/order/create', {
           restaurantID: item.restaurantID,
           tableID: tableId,
           guestName: name,
@@ -169,13 +169,13 @@ const Booking = ({route, navigation}) => {
             return alert(res.data.message);
           } else {
             await axios
-              .post('http://10.0.2.2:3001/api/order-menu/create', {
+              .post('https://tablenow.onrender.com/api/order-menu/create', {
                 restaurantID: item.restaurantID,
                 orderID: res.data.data._id,
               })
               .then(async res => {
                 await axios.put(
-                  `http://10.0.2.2:3001/api/order/update/${res.data.data.orderID}`,
+                  `https://tablenow.onrender.com/api/order/update/${res.data.data.orderID}`,
                   {
                     orderMenuID: res.data.data._id,
                   },
@@ -183,7 +183,7 @@ const Booking = ({route, navigation}) => {
               });
             await axios
               .post(
-                `http://10.0.2.2:3001/api/table/update-status/${item.restaurantID}`,
+                `https://tablenow.onrender.com/api/table/update-status/${item.restaurantID}`,
                 {
                   tables: [
                     {

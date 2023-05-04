@@ -32,9 +32,9 @@ const Profile = ({navigation, route}) => {
         </View>
       </View>
       <View style={styles.body}>
-        <Text style={styles.gender}>{staff.staffName}</Text>
-        <Text style={styles.gender}>{staff.staffSex}</Text>
-        <Text style={styles.phone}>{staff.staffPhone}</Text>
+        <Text style={styles.box}>{staff.staffName}</Text>
+        <Text style={styles.box}>{staff.staffSex}</Text>
+        <Text style={styles.box}>{staff.staffPhone}</Text>
       </View>
     </View>
   );
@@ -64,10 +64,10 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: 'black',
     fontWeight: '600',
+    marginVertical: 10,
   },
-  id: {fontSize: 18, color: 'maroon', fontWeight: 400},
-
-  gender: {
+  id: {fontSize: 23, color: 'maroon', fontWeight: 700},
+  box: {
     width: 300,
     height: 60,
     borderWidth: 1,
@@ -77,17 +77,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 20,
     textAlignVertical: 'center',
-  },
-  phone: {
-    width: 300,
-    height: 60,
-    borderWidth: 1,
-    borderColor: 'maroon',
-    borderRadius: 10,
-    marginVertical: 10,
-    textAlign: 'center',
-    fontSize: 20,
-    textAlignVertical: 'center',
+    backgroundColor: 'white',
+    color: 'black',
   },
   email: {
     width: 300,
